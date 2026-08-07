@@ -213,16 +213,29 @@ export default function App(): JSX.Element {
 
             {!running && (
               <div className="placeholder">
-                {status === 'loading' && <p>Вмикаю камеру й вантажу модель…</p>}
+                {status === 'loading' && (
+                  <>
+                    <img src="icon.png" alt="" width={96} height={96} />
+                    <p className="title">Вмикаю камеру</p>
+                    <p>вантажу модель обличчя…</p>
+                  </>
+                )}
                 {status === 'idle' && (
                   <>
-                    <img src="icon.png" alt="" width={72} height={72} />
-                    <p>Камера вимкнена</p>
+                    <img src="icon.png" alt="" width={96} height={96} />
+                    <p className="title">Готовий до мемів</p>
+                    <p>Тисни «Увімкнути камеру», щоб почати</p>
+                    <p className="keys">
+                      <kbd>Space</kbd> фото
+                      <kbd>← →</kbd> маски
+                      <kbd>Ctrl + Alt + V</kbd> голос
+                    </p>
                   </>
                 )}
                 {status === 'error' && (
                   <>
-                    <p className="err">Не вдалось запустити камеру</p>
+                    <img src="icon.png" alt="" width={96} height={96} />
+                    <p className="title err">Не вдалось запустити камеру</p>
                     <p className="detail">{error}</p>
                   </>
                 )}
