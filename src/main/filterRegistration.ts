@@ -96,13 +96,19 @@ export async function getFilterStatus(): Promise<FilterStatus> {
   }
 }
 
-/** Прибирає бібліотеки від попередніх версій, які вже ніхто не тримає. */
+/**
+ * Видаляє файли бібліотек від попередніх версій.
+ *
+ * Навмисно без regsvr32 /u: усі версії ділять один CLSID, тож зняття реєстрації
+ * зі старого файлу стерло б ті самі ключі, які щойно записав новий — і камера
+ * зникала б рівно після успішного оновлення. Досить прибрати самі файли.
+ */
 async function removeOldDrivers(keep: string): Promise<void> {
   const dir = driverDir()
   for (const name of await readdir(dir).catch(() => [])) {
     const full = join(dir, name)
     if (name.startsWith('memecam-filter') && full !== keep) {
-      await run('regsvr32', ['/s', '/u', full]).catch(() => {})
+      // Ще завантажена якимось застосунком — приберемо наступного разу.
       await unlink(full).catch(() => {})
     }
   }
@@ -162,8 +168,13 @@ export async function registerFilter(): Promise<void> {
 }
 
 export async function unregisterFilter(): Promise<void> {
-  // Знімаємо все, що лежить у теці драйвера: після оновлень там могли
-  // накопичитись бібліотеки від попередніх версій.
+  // Ключі спільні для всіх версій, тож достатньо зняти реєстрацію один раз
+  // будь-яким наявним файлом, а решту просто видалити.
+  const registered = await registeredPath()
+  if (registered && existsSync(registered)) {
+    await run('regsvr32', ['/s', '/u', registered]).catch(() => {})
+  }
+
   await removeOldDrivers('')
   await unlink(markerPath()).catch(() => {})
 }

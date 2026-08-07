@@ -3,7 +3,9 @@ import type { LensParams } from './gl/LensRenderer'
 import { MASKS, findMask, paramsForMask } from './masks/registry'
 import { isOverlay } from './masks/types'
 import { useMemeCam, VCAM_FPS, type CameraTarget } from './useMemeCam'
+import { useVoice } from './useVoice'
 import { MaskCarousel } from './ui/MaskCarousel'
+import { VoiceBar } from './ui/VoiceBar'
 import { SettingsPanel } from './ui/SettingsPanel'
 import { UpdatesDialog } from './ui/UpdatesDialog'
 
@@ -20,6 +22,11 @@ export default function App(): JSX.Element {
   const [params, setParams] = useState<LensParams>(() => paramsForMask(findMask('laser')))
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
   const [deviceId, setDeviceId] = useState('')
+  const [audioIn, setAudioIn] = useState<MediaDeviceInfo[]>([])
+  const [audioOut, setAudioOut] = useState<MediaDeviceInfo[]>([])
+  const [micId, setMicId] = useState('')
+  const [outId, setOutId] = useState('')
+  const [semitones, setSemitones] = useState(-5)
   const [target, setTarget] = useState<CameraTarget>('memecam')
   const [filter, setFilter] = useState<FilterStatus | null>(null)
   const [update, setUpdate] = useState<UpdateState | null>(null)
@@ -30,6 +37,8 @@ export default function App(): JSX.Element {
 
   const { status, error, stats, lastPhoto, start, stop, capture, vcamOn, startVirtualCamera, stopVirtualCamera } =
     useMemeCam(canvasRef, params, overlayLayers)
+
+  const voice = useVoice()
 
   const running = status === 'running'
   const needsDriver = target === 'memecam' && filter !== null && !filter.current
@@ -42,7 +51,18 @@ export default function App(): JSX.Element {
   const refreshDevices = useCallback(async () => {
     const all = await navigator.mediaDevices.enumerateDevices()
     setDevices(all.filter((d) => d.kind === 'videoinput'))
+    setAudioIn(all.filter((d) => d.kind === 'audioinput'))
+    setAudioOut(all.filter((d) => d.kind === 'audiooutput'))
   }, [])
+
+  const toggleVoice = useCallback(async () => {
+    if (voice.on) await voice.stop()
+    else {
+      await voice.start(micId, outId)
+      // Мітки пристроїв стають видимі лише після дозволу на мікрофон.
+      await refreshDevices()
+    }
+  }, [voice, micId, outId, refreshDevices])
 
   const refreshFilter = useCallback(async () => {
     setFilter(await window.memecam.filter.status())
@@ -108,6 +128,36 @@ export default function App(): JSX.Element {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [capture, running, maskId, selectMask, showUpdates])
+
+  // Гарячі клавіші приходять з main і працюють, коли вікно згорнуте.
+  useEffect(() => {
+    return window.memecam.hotkeys.onPress((action) => {
+      switch (action.type) {
+        case 'mask':
+          if (action.index < MASKS.length) selectMask(MASKS[action.index].id)
+          break
+        case 'mask-off':
+          selectMask(MASKS[0].id)
+          break
+        case 'mask-next':
+        case 'mask-prev': {
+          const step = action.type === 'mask-next' ? 1 : -1
+          const i = MASKS.findIndex((m) => m.id === maskId)
+          selectMask(MASKS[(i + step + MASKS.length) % MASKS.length].id)
+          break
+        }
+        case 'capture':
+          if (running) capture()
+          break
+        case 'voice-toggle':
+          void toggleVoice()
+          break
+        case 'broadcast-toggle':
+          if (running && !needsDriver) void toggleBroadcast()
+          break
+      }
+    })
+  })
 
   const updateReady = update?.phase === 'available' || update?.phase === 'ready'
 
@@ -244,6 +294,29 @@ export default function App(): JSX.Element {
               </button>
             </div>
           </div>
+
+          <VoiceBar
+            on={voice.on}
+            presetId={voice.presetId}
+            stats={voice.stats}
+            error={voice.error}
+            inputs={audioIn}
+            outputs={audioOut}
+            inputId={micId}
+            outputId={outId}
+            semitones={semitones}
+            onInput={setMicId}
+            onOutput={setOutId}
+            onPreset={(id) => {
+              voice.selectPreset(id)
+              setSemitones(voice.params.semitones)
+            }}
+            onSemitones={(v) => {
+              setSemitones(v)
+              voice.tune('semitones', v)
+            }}
+            onToggle={() => void toggleVoice()}
+          />
 
           <div className="notices">
             {needsDriver && (

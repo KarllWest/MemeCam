@@ -1,4 +1,4 @@
-import type { JSX } from 'react'
+import { useEffect, useState, type JSX } from 'react'
 import type { LensParams } from '../gl/LensRenderer'
 import type { Mask } from '../masks/types'
 import { Slider } from './Slider'
@@ -23,6 +23,13 @@ export function SettingsPanel({
   onClose
 }: Props): JSX.Element {
   const set = onChange
+  const [hotkeys, setHotkeys] = useState<
+    { accelerator: string; label: string; registered: boolean }[]
+  >([])
+
+  useEffect(() => {
+    void window.memecam.hotkeys.list().then(setHotkeys)
+  }, [])
 
   return (
     <aside className="panel">
@@ -133,6 +140,18 @@ export function SettingsPanel({
           onChange={(v) => set('vignette', v)} />
         <Slider label="Згладжування руху" value={params.smoothing} min={0} max={0.95} step={0.01}
           onChange={(v) => set('smoothing', v)} />
+
+        <h3>Гарячі клавіші</h3>
+        <p className="panel-note">Працюють навіть коли додаток згорнутий.</p>
+        <ul className="hotkeys">
+          {hotkeys.map((h) => (
+            <li key={h.accelerator} className={h.registered ? '' : 'taken'}>
+              <kbd>{h.accelerator.replace(/Control/g, 'Ctrl').replace(/\+/g, ' + ')}</kbd>
+              <span>{h.label}</span>
+              {!h.registered && <em title="Комбінацію зайняла інша програма">зайнято</em>}
+            </li>
+          ))}
+        </ul>
       </div>
     </aside>
   )

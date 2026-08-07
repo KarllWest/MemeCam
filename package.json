@@ -1,6 +1,6 @@
 {
   "name": "meme-cam",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Meme Cam - камера з мем-лінзами та ефектами звуку",
   "main": "./out/main/index.js",
   "author": "KarllWest",
@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "check:shaders": "node scripts/check-shaders.mjs",
     "check:masks": "node scripts/check-masks.mjs",
+    "check:audio": "node scripts/check-audio.mjs",
     "test:vcam": "node scripts/test-virtualcam.mjs",
     "make:icon": "node scripts/make-icon.mjs",
     "build:filter": "node scripts/build-filter.mjs",

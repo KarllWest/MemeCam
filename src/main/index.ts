@@ -9,6 +9,7 @@ import {
   unregisterFilter,
   syncFilterIfStale
 } from './filterRegistration'
+import { registerHotkeys, getHotkeys, unregisterHotkeys } from './hotkeys'
 import {
   initUpdater,
   getUpdateState,
@@ -185,6 +186,11 @@ app.whenReady().then(() => {
   ipcMain.handle('filter:register', () => registerFilter())
   ipcMain.handle('filter:unregister', () => unregisterFilter())
 
+  // --- Гарячі клавіші ---
+
+  registerHotkeys()
+  ipcMain.handle('hotkeys:list', () => getHotkeys())
+
   // --- Оновлення ---
 
   initUpdater()
@@ -204,6 +210,7 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
   vcam?.stop()
   vcam = null
+  unregisterHotkeys()
 })
 
 app.on('window-all-closed', () => {

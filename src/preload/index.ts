@@ -1,5 +1,14 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 
+export type HotkeyAction =
+  | { type: 'mask'; index: number }
+  | { type: 'mask-next' }
+  | { type: 'mask-prev' }
+  | { type: 'mask-off' }
+  | { type: 'voice-toggle' }
+  | { type: 'broadcast-toggle' }
+  | { type: 'capture' }
+
 export interface UpdateState {
   phase:
     | 'idle'
@@ -30,6 +39,19 @@ const api = {
   /** Системне вікно з помилкою. */
   showError: (title: string, message: string): Promise<void> =>
     ipcRenderer.invoke('app:error', title, message),
+
+  /** Гарячі клавіші, що працюють навіть коли додаток згорнутий. */
+  hotkeys: {
+    list: (): Promise<{ accelerator: string; label: string; registered: boolean }[]> =>
+      ipcRenderer.invoke('hotkeys:list'),
+
+    /** Підписка на натискання. Повертає функцію відписки. */
+    onPress: (listener: (action: HotkeyAction) => void): (() => void) => {
+      const handler = (_e: IpcRendererEvent, action: HotkeyAction): void => listener(action)
+      ipcRenderer.on('hotkey', handler)
+      return () => ipcRenderer.off('hotkey', handler)
+    }
+  },
 
   /** Оновлення через релізи GitHub. */
   updates: {

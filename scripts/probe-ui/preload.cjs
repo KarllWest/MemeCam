@@ -22,6 +22,10 @@ contextBridge.exposeInMainWorld('memecam', {
     install: async () => {},
     onChange: () => () => {}
   },
+  hotkeys: {
+    list: async () => [],
+    onPress: () => () => {}
+  },
   filter: {
     status: async () => ({ available: true, registered: true, current: true, dllPath: '' }),
     register: async () => {},

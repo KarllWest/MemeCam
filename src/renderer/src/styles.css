@@ -454,6 +454,96 @@ select:disabled {
   opacity: 0.35;
 }
 
+/* ---------- голос ---------- */
+
+.voice {
+  flex: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.voice-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.voice-head .spacer {
+  flex: 1;
+}
+
+.voice-head select {
+  flex: 0 1 190px;
+  min-width: 90px;
+}
+
+/* Індикатор рівня: одразу видно, чи взагалі йде сигнал з мікрофона. */
+.level {
+  flex: none;
+  width: 90px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.level-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--ok), var(--warn));
+  transition: width 0.06s linear;
+}
+
+.voice-presets {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.voice-presets::-webkit-scrollbar {
+  height: 0;
+}
+
+.vp {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.vp:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.vp.active {
+  color: #fff;
+  border-color: var(--accent);
+  background: rgba(110, 168, 255, 0.16);
+}
+
+.vp-icon {
+  font-size: 15px;
+}
+
+.voice-slider {
+  margin-bottom: 0;
+}
+
 /* ---------- повідомлення ---------- */
 
 .notices {
@@ -627,6 +717,44 @@ select:disabled {
 
 .swatch:hover {
   border-color: var(--text);
+}
+
+.hotkeys {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hotkeys li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hotkeys li.taken {
+  opacity: 0.5;
+}
+
+.hotkeys em {
+  font-style: normal;
+  font-size: 10.5px;
+  color: var(--warn);
+}
+
+kbd {
+  flex: none;
+  background: var(--surface-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font: 11px/1.3 'Segoe UI', system-ui, sans-serif;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 /* ---------- вікно оновлень ---------- */
