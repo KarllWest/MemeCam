@@ -40,6 +40,13 @@ const api = {
   showError: (title: string, message: string): Promise<void> =>
     ipcRenderer.invoke('app:error', title, message),
 
+  /** Налаштування між запусками. Файл шифрується ключем операційної системи. */
+  settings: {
+    load: (): Promise<Record<string, unknown>> => ipcRenderer.invoke('settings:load'),
+    save: (data: Record<string, unknown>): Promise<void> =>
+      ipcRenderer.invoke('settings:save', data)
+  },
+
   /** Гарячі клавіші, що працюють навіть коли додаток згорнутий. */
   hotkeys: {
     list: (): Promise<{ accelerator: string; label: string; registered: boolean }[]> =>

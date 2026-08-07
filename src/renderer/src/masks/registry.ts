@@ -173,6 +173,113 @@ export const MASKS: Mask[] = [
       glasses('glasses-round.svg', 1.5),
       head('mustache.svg', 0.5, [0, -0.05], { center: LM.noseBottom })
     ]
+  },
+  {
+    id: 'pirate',
+    name: 'Пірат',
+    icon: '🏴‍☠️',
+    layers: [
+      // Пов'язка сидить на осі очей: так вона лягає рівно на одне око.
+      {
+        kind: 'overlay',
+        texture: 'eyepatch.svg',
+        anchor: { axis: [LM.eyeOuterL, LM.eyeOuterR] },
+        scale: 1.6,
+        offset: [0, 0.04],
+        rotate: true
+      },
+      head('mustache.svg', 0.66, [0, -0.06], { center: LM.noseBottom })
+    ]
+  },
+  {
+    id: 'cowboy',
+    name: 'Ковбой',
+    icon: '🤠',
+    layers: [head('cowboy-hat.svg', 1.55, [0, 0.66])]
+  },
+  {
+    id: 'clown',
+    name: 'Клоун',
+    icon: '🤡',
+    layers: [
+      head('clown-nose.svg', 0.3, [0, 0], { center: LM.noseTip }),
+      head('party-hat.svg', 0.62, [0.16, 0.92])
+    ]
+  },
+  {
+    id: 'party',
+    name: 'Свято',
+    icon: '🎉',
+    layers: [
+      head('party-hat.svg', 0.6, [0, 0.95]),
+      {
+        kind: 'lens',
+        params: {
+          ...NEUTRAL_PARAMS,
+          bloomStrength: 1.0,
+          bloomThreshold: 0.72,
+          exposure: 1.06,
+          saturation: 1.18
+        }
+      }
+    ]
+  },
+  {
+    id: 'terminator',
+    name: 'Термінатор',
+    icon: '🦾',
+    layers: [
+      {
+        kind: 'lens',
+        params: {
+          ...DEFAULT_PARAMS,
+          color: [1.0, 0.14, 0.1],
+          sharpness: 7,
+          intensity: 1.9,
+          coreSize: 0.013,
+          streakLen: 0.05,
+          streakGain: 0.45,
+          beamGain: 1.3,
+          beamLen: 0.8,
+          beamWidth: 0.012,
+          smokeAmount: 0.4,
+          smokeColor: [0.42, 0.3, 0.3],
+          boltCount: 0,
+          exposure: 0.44,
+          contrast: 1.34,
+          saturation: 0.5,
+          vignette: 0.82,
+          bloomStrength: 1.5
+        }
+      }
+    ]
+  },
+  {
+    id: 'matrix',
+    name: 'Матриця',
+    icon: '💊',
+    layers: [
+      glasses('sunglasses-deal.svg', 1.5),
+      {
+        kind: 'lens',
+        params: {
+          ...DEFAULT_PARAMS,
+          color: [0.3, 1.0, 0.42],
+          boltColor: [0.35, 1.0, 0.5],
+          smokeColor: [0.24, 0.5, 0.3],
+          sharpness: 6.5,
+          intensity: 1.3,
+          streakGain: 0.6,
+          beamGain: 0.9,
+          boltCount: 2,
+          boltRate: 0.6,
+          smokeAmount: 0.5,
+          exposure: 0.5,
+          saturation: 0.62,
+          vignette: 0.7
+        }
+      }
+    ]
   }
 ]
 

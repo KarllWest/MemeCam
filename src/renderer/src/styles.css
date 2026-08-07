@@ -550,8 +550,8 @@ select:disabled {
 .voice {
   flex: none;
   display: flex;
-  align-items: center;
-  gap: 11px;
+  flex-direction: column;
+  gap: 7px;
   min-width: 0;
   padding: 8px 12px;
   background: var(--surface);
@@ -564,6 +564,33 @@ select:disabled {
 
 .voice.on {
   border-color: rgba(91, 157, 255, 0.36);
+}
+
+.voice-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.voice-hint {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.voice-hint.err {
+  color: var(--err);
+}
+
+.voice-hint.warn {
+  color: var(--warn);
+}
+
+.voice-hint b {
+  color: var(--text);
+  font-weight: 550;
 }
 
 .voice-label {

@@ -1,10 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="300" viewBox="0 0 512 300">
-  <g fill="#8b5a2b" stroke="#5e3d1c" stroke-width="7" stroke-linejoin="round">
-    <path d="M98 18 C30 60 12 182 48 264 C84 292 132 262 142 198 C152 128 142 58 98 18 Z" />
-    <path d="M414 18 C482 60 500 182 464 264 C428 292 380 262 370 198 C360 128 370 58 414 18 Z" />
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="308" viewBox="0 0 512 308">
+  <defs>
+    <linearGradient id="furL" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a9713a" />
+      <stop offset="0.55" stop-color="#84532a" />
+      <stop offset="1" stop-color="#5a3719" />
+    </linearGradient>
+    <linearGradient id="furR" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a9713a" />
+      <stop offset="0.55" stop-color="#84532a" />
+      <stop offset="1" stop-color="#5a3719" />
+    </linearGradient>
+    <linearGradient id="inner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e0b183" />
+      <stop offset="1" stop-color="#b7834f" />
+    </linearGradient>
+  </defs>
+
+  <g stroke="#4a2c14" stroke-width="7" stroke-linejoin="round">
+    <path fill="url(#furL)" d="M98 18 C30 60 12 182 48 264 C84 292 132 262 142 198 C152 128 142 58 98 18 Z" />
+    <path fill="url(#furR)" d="M414 18 C482 60 500 182 464 264 C428 292 380 262 370 198 C360 128 370 58 414 18 Z" />
   </g>
-  <g fill="#c88f57">
-    <path d="M98 62 C52 94 40 178 64 238 C86 256 116 236 122 194 C130 138 124 90 98 62 Z" />
-    <path d="M414 62 C460 94 472 178 448 238 C426 256 396 236 390 194 C382 138 388 90 414 62 Z" />
+
+  <g fill="url(#inner)">
+    <path d="M98 64 C54 96 42 178 66 236 C88 254 116 234 122 194 C130 140 124 92 98 64 Z" />
+    <path d="M414 64 C458 96 470 178 446 236 C424 254 396 234 390 194 C382 140 388 92 414 64 Z" />
+  </g>
+
+  <!-- пасма шерсті по краю -->
+  <g stroke="#3d2410" stroke-width="4" stroke-linecap="round" opacity="0.5" fill="none">
+    <path d="M92 40 C64 78 54 140 62 196" />
+    <path d="M420 40 C448 78 458 140 450 196" />
   </g>
 </svg>

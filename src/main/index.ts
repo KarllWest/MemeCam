@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, session, dialog, protocol, net } from 'electron'
 import { join, normalize, sep } from 'node:path'
+import { loadSettings, saveSettings } from './settings'
 import { pathToFileURL } from 'node:url'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { VirtualCamera, type CameraTarget } from './virtualCamera'
@@ -98,9 +99,12 @@ function createWindow(): void {
     title: 'Meme Cam',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      // Пісочниця вмикається, бо preload користується лише ipcRenderer.
+      // Нативні модулі живуть у головному процесі, куди сторінка не дістає.
+      sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
+      webSecurity: true,
       // Разом з ключами вище тримає цикл рендеру живим, поки вікно згорнуте.
       backgroundThrottling: false
     }
@@ -113,6 +117,21 @@ function createWindow(): void {
     shell.openExternal(url)
     return { action: 'deny' }
   })
+
+  // Вікно має показувати лише наш інтерфейс. Якби сторонній вміст сюди потрапив,
+  // він отримав би доступ до мосту, а через нього — до камери й мікрофона.
+  const allowedOrigins = ['app://local', process.env['ELECTRON_RENDERER_URL'] ?? '']
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!allowedOrigins.some((o) => o && url.startsWith(o))) {
+      event.preventDefault()
+      shell.openExternal(url)
+    }
+  })
+
+  // Веб-сторінки не мають права підвантажувати сюди свої нативні модулі.
+  win.webContents.session.setPermissionCheckHandler((_wc, permission) =>
+    ['media', 'audioCapture', 'videoCapture'].includes(permission)
+  )
 
   const devUrl = process.env['ELECTRON_RENDERER_URL']
   if (isDev && devUrl) {
@@ -143,7 +162,12 @@ app.whenReady().then(() => {
     return full
   })
 
-  ipcMain.handle('capture:reveal', async (_e, fullPath: string) => {
+  ipcMain.handle('capture:reveal', async (_e, fullPath: unknown) => {
+    // Показуємо лише те, що самі ж і зберегли: інакше через міст можна було б
+    // попросити відкрити провідник на будь-якому файлі системи.
+    if (typeof fullPath !== 'string') return
+    const dir = captureDir()
+    if (!normalize(fullPath).startsWith(dir + sep)) return
     shell.showItemInFolder(fullPath)
   })
 
@@ -155,17 +179,27 @@ app.whenReady().then(() => {
 
   ipcMain.handle(
     'vcam:start',
-    (_e, width: number, height: number, fps: number, target: CameraTarget) => {
+    (_e, width: unknown, height: unknown, fps: unknown, target: unknown) => {
+      // Розміри йдуть у розрахунок буфера спільної пам'яті, тож перевіряємо їх
+      // тут, а не покладаємось на те, що рендерер надішле щось притомне.
+      const isSize = (v: unknown, max: number): v is number =>
+        typeof v === 'number' && Number.isInteger(v) && v > 0 && v <= max
+      if (!isSize(width, 7680) || !isSize(height, 4320) || !isSize(fps, 240)) {
+        throw new Error('Некоректні параметри камери')
+      }
+      const dest: CameraTarget = target === 'obs' ? 'obs' : 'memecam'
+
       vcam?.stop()
       vcam = new VirtualCamera()
-      vcam.start(width, height, fps, target) // помилка полетить у рендерер як відхилена обіцянка
+      vcam.start(width, height, fps, dest) // помилка полетить у рендерер як відхилена обіцянка
       vcamEpoch = process.hrtime.bigint()
     }
   )
 
   // send, а не invoke: на кожен кадр зайвий зворотний рейс нам ні до чого.
-  ipcMain.on('vcam:frame', (_e, bytes: Uint8Array) => {
+  ipcMain.on('vcam:frame', (_e, bytes: unknown) => {
     if (!vcam?.running) return
+    if (!(bytes instanceof Uint8Array)) return
     const frame = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
     vcam.writeFrame(frame, (process.hrtime.bigint() - vcamEpoch) / 100n)
   })
@@ -185,6 +219,11 @@ app.whenReady().then(() => {
   ipcMain.handle('filter:status', () => getFilterStatus())
   ipcMain.handle('filter:register', () => registerFilter())
   ipcMain.handle('filter:unregister', () => unregisterFilter())
+
+  // --- Налаштування (шифруються ключем системи) ---
+
+  ipcMain.handle('settings:load', () => loadSettings())
+  ipcMain.handle('settings:save', (_e, data: unknown) => saveSettings(data))
 
   // --- Гарячі клавіші ---
 

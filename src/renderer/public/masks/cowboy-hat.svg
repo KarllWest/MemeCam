@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="300" viewBox="0 0 512 300">
+  <defs>
+    <linearGradient id="felt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9c6b3e" />
+      <stop offset="0.5" stop-color="#70492a" />
+      <stop offset="1" stop-color="#4b2f19" />
+    </linearGradient>
+    <linearGradient id="brim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7d5230" />
+      <stop offset="1" stop-color="#3f2714" />
+    </linearGradient>
+  </defs>
+
+  <!-- тулія з характерною заломленою маківкою -->
+  <path fill="url(#felt)" stroke="#33200f" stroke-width="7" stroke-linejoin="round"
+        d="M148 214 C142 122 158 62 200 34 C222 62 234 62 256 40 C278 62 290 62 312 34
+           C354 62 370 122 364 214 Z" />
+  <path fill="#000" opacity="0.22"
+        d="M256 40 C278 62 290 62 312 34 C332 58 348 96 356 148 L300 148 C296 100 280 66 256 40 Z" />
+
+  <!-- стрічка -->
+  <path fill="#2b1c0e" d="M146 196 C200 178 312 178 366 196 L366 226 C312 208 200 208 146 226 Z" />
+  <circle cx="330" cy="206" r="12" fill="#e8c25a" stroke="#8d6a12" stroke-width="3" />
+
+  <!-- криси -->
+  <path fill="url(#brim)" stroke="#33200f" stroke-width="7" stroke-linejoin="round"
+        d="M256 210 C378 210 500 232 500 254 C500 278 372 292 256 292
+           C140 292 12 278 12 254 C12 232 134 210 256 210 Z" />
+  <path fill="#a2703f" opacity="0.4"
+        d="M256 218 C360 218 470 234 476 252 C440 238 350 230 256 230 C162 230 72 238 36 252
+           C42 234 152 218 256 218 Z" />
+</svg>

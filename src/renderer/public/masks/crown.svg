@@ -1,9 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="280" viewBox="0 0 512 280">
-  <path fill="#f5c542" stroke="#b8891a" stroke-width="9" stroke-linejoin="round"
-        d="M42 232 L28 62 L148 148 L256 34 L364 148 L484 62 L470 232 Z" />
-  <rect x="40" y="212" width="432" height="46" rx="12" fill="#e0ad2c" stroke="#b8891a" stroke-width="9" />
-  <circle cx="256" cy="116" r="21" fill="#e0464a" />
-  <circle cx="122" cy="176" r="15" fill="#4a9de0" />
-  <circle cx="390" cy="176" r="15" fill="#4a9de0" />
-  <circle cx="256" cy="235" r="15" fill="#5ad18c" />
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="288" viewBox="0 0 512 288">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe89a" />
+      <stop offset="0.42" stop-color="#f3c141" />
+      <stop offset="1" stop-color="#b8811a" />
+    </linearGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8b93a" />
+      <stop offset="1" stop-color="#9c6c12" />
+    </linearGradient>
+    <radialGradient id="ruby" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#ff8f8f" />
+      <stop offset="0.5" stop-color="#e0343c" />
+      <stop offset="1" stop-color="#8d1219" />
+    </radialGradient>
+    <radialGradient id="sapph" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#9fd8ff" />
+      <stop offset="0.5" stop-color="#3f8fe0" />
+      <stop offset="1" stop-color="#154a86" />
+    </radialGradient>
+  </defs>
+
+  <path fill="url(#gold)" stroke="#8a5f10" stroke-width="7" stroke-linejoin="round"
+        d="M42 236 L26 58 L150 150 L256 30 L362 150 L486 58 L470 236 Z" />
+
+  <!-- блик по лівому схилу: дає відчуття металу -->
+  <path fill="#fff6cf" opacity="0.42" d="M26 58 L150 150 L132 168 L36 106 Z" />
+
+  <rect x="38" y="214" width="436" height="50" rx="14" fill="url(#band)"
+        stroke="#8a5f10" stroke-width="7" />
+  <rect x="52" y="222" width="408" height="10" rx="5" fill="#ffe9a8" opacity="0.5" />
+
+  <circle cx="256" cy="112" r="23" fill="url(#ruby)" stroke="#7d0f16" stroke-width="3" />
+  <circle cx="120" cy="176" r="16" fill="url(#sapph)" stroke="#123f73" stroke-width="3" />
+  <circle cx="392" cy="176" r="16" fill="url(#sapph)" stroke="#123f73" stroke-width="3" />
+  <circle cx="256" cy="239" r="15" fill="#54cf8b" stroke="#1c6f45" stroke-width="3" />
 </svg>

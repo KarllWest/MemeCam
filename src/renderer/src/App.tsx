@@ -35,6 +35,7 @@ export default function App(): JSX.Element {
   const [showSettings, setShowSettings] = useState(false)
   const [showUpdates, setShowUpdates] = useState(false)
   const [installing, setInstalling] = useState(false)
+  const [restored, setRestored] = useState(false)
   const [notice, setNotice] = useState<{ text: string; tone: 'info' | 'err' } | null>(null)
 
   const { status, error, stats, lastPhoto, start, stop, capture, vcamOn, startVirtualCamera, stopVirtualCamera } =
@@ -76,6 +77,41 @@ export default function App(): JSX.Element {
     void window.memecam.updates.state().then(setUpdate)
     return window.memecam.updates.onChange(setUpdate)
   }, [refreshDevices, refreshFilter])
+
+  // Відновлюємо вибір з минулого запуску. Робиться один раз, до першої взаємодії.
+  useEffect(() => {
+    void window.memecam.settings.load().then((s) => {
+      if (typeof s.maskId === 'string') selectMask(s.maskId)
+      if (typeof s.voicePresetId === 'string') voice.selectPreset(s.voicePresetId)
+      if (typeof s.semitones === 'number') {
+        setSemitones(s.semitones)
+        voice.tune('semitones', s.semitones)
+      }
+      if (typeof s.cameraId === 'string') setDeviceId(s.cameraId)
+      if (typeof s.micId === 'string') setMicId(s.micId)
+      if (typeof s.outputId === 'string') setOutId(s.outputId)
+      if (s.target === 'obs' || s.target === 'memecam') setTarget(s.target)
+      setRestored(true)
+    })
+    // Свідомо один раз при старті: далі стан веде користувач.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Зберігаємо після кожної зміни, але тільки коли відновлення вже позаду —
+  // інакше перший же запис затер би збережене значеннями за замовчуванням.
+  useEffect(() => {
+    if (!restored) return
+    void window.memecam.settings.save({
+      maskId,
+      voicePresetId: voice.presetId,
+      semitones,
+      cameraId: deviceId,
+      micId,
+      outputId: outId,
+      target,
+      mirror: params.mirror
+    })
+  }, [restored, maskId, voice.presetId, semitones, deviceId, micId, outId, target, params.mirror])
 
   useEffect(() => {
     if (running) void refreshDevices()
@@ -292,6 +328,10 @@ export default function App(): JSX.Element {
             on={voice.on}
             presetId={voice.presetId}
             stats={voice.stats}
+            error={voice.error}
+            outputLabel={
+              audioOut.find((d) => d.deviceId === outId)?.label || 'системний вихід за замовчуванням'
+            }
             onPreset={(id) => {
               voice.selectPreset(id)
               setSemitones(findVoicePreset(id).params.semitones)

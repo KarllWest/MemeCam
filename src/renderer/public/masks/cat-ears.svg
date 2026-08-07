@@ -1,10 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="280" viewBox="0 0 512 280">
-  <g fill="#3a3a42">
-    <path d="M58 268 L72 16 L252 192 Z" />
-    <path d="M454 268 L440 16 L260 192 Z" />
-  </g>
-  <g fill="#f0a8b8">
-    <path d="M98 238 L106 80 L214 186 Z" />
-    <path d="M414 238 L406 80 L298 186 Z" />
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="288" viewBox="0 0 512 288">
+  <defs>
+    <linearGradient id="catL" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#54545f" />
+      <stop offset="0.55" stop-color="#33333c" />
+      <stop offset="1" stop-color="#1c1c23" />
+    </linearGradient>
+    <linearGradient id="catR" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#54545f" />
+      <stop offset="0.55" stop-color="#33333c" />
+      <stop offset="1" stop-color="#1c1c23" />
+    </linearGradient>
+    <linearGradient id="pink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffc2d2" />
+      <stop offset="1" stop-color="#e07f9c" />
+    </linearGradient>
+  </defs>
+
+  <path fill="url(#catL)" d="M56 272 C48 168 58 78 76 14 C132 66 196 128 254 194 C200 226 128 254 56 272 Z" />
+  <path fill="url(#catR)" d="M456 272 C464 168 454 78 436 14 C380 66 316 128 258 194 C312 226 384 254 456 272 Z" />
+
+  <path fill="url(#pink)" d="M98 236 C94 164 100 106 112 68 C152 106 190 146 220 184 C182 206 140 224 98 236 Z" />
+  <path fill="url(#pink)" d="M414 236 C418 164 412 106 400 68 C360 106 322 146 292 184 C330 206 372 224 414 236 Z" />
+
+  <!-- шерстинки по внутрішньому краю -->
+  <g stroke="#6a6a78" stroke-width="4" stroke-linecap="round" opacity="0.6" fill="none">
+    <path d="M118 240 L96 258 M148 250 L130 270 M180 258 L166 278" />
+    <path d="M394 240 L416 258 M364 250 L382 270 M332 258 L346 278" />
   </g>
 </svg>

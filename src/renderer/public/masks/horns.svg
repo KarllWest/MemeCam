@@ -1,10 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="260" viewBox="0 0 512 260">
-  <g fill="#c0392b" stroke="#75201a" stroke-width="9" stroke-linejoin="round">
-    <path d="M152 252 C58 218 20 138 42 34 C114 66 162 148 172 252 Z" />
-    <path d="M360 252 C454 218 492 138 470 34 C398 66 350 148 340 252 Z" />
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="268" viewBox="0 0 512 268">
+  <defs>
+    <linearGradient id="hornL" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#7d1f18" />
+      <stop offset="0.5" stop-color="#c93a2c" />
+      <stop offset="1" stop-color="#ff7a5e" />
+    </linearGradient>
+    <linearGradient id="hornR" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#7d1f18" />
+      <stop offset="0.5" stop-color="#c93a2c" />
+      <stop offset="1" stop-color="#ff7a5e" />
+    </linearGradient>
+  </defs>
+
+  <g stroke="#5e150f" stroke-width="8" stroke-linejoin="round">
+    <path fill="url(#hornL)" d="M152 258 C56 222 18 138 40 30 C114 64 164 148 174 258 Z" />
+    <path fill="url(#hornR)" d="M360 258 C456 222 494 138 472 30 C398 64 348 148 338 258 Z" />
   </g>
-  <g fill="#e05c4c" opacity="0.75">
-    <path d="M150 236 C88 208 60 148 72 74 C120 104 148 164 156 236 Z" />
-    <path d="M362 236 C424 208 452 148 440 74 C392 104 364 164 356 236 Z" />
+
+  <!-- поперечні борозни: без них ріг виглядає гумовим -->
+  <g stroke="#8d2419" stroke-width="5" stroke-linecap="round" opacity="0.55" fill="none">
+    <path d="M74 78 C104 92 124 116 136 146" />
+    <path d="M58 130 C92 144 116 168 130 198" />
+    <path d="M438 78 C408 92 388 116 376 146" />
+    <path d="M454 130 C420 144 396 168 382 198" />
+  </g>
+
+  <!-- світлий край з боку світла -->
+  <g fill="#ff9d84" opacity="0.5">
+    <path d="M44 44 C58 108 84 158 118 196 L104 210 C66 168 42 112 36 48 Z" />
+    <path d="M468 44 C454 108 428 158 394 196 L408 210 C446 168 470 112 476 48 Z" />
   </g>
 </svg>

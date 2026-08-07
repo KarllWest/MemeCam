@@ -5,6 +5,8 @@ import { findVoicePreset, type VoiceParams } from './audio/presets'
 export interface VoiceStats {
   level: number
   latencyMs: number
+  /** Скільки мілісекунд поспіль з мікрофона йде тиша. */
+  silentMs: number
 }
 
 /** Мікрофон з ефектами: вмикання, вибір пресета й індикатор рівня. */
@@ -15,7 +17,7 @@ export function useVoice() {
   const [on, setOn] = useState(false)
   const [presetId, setPresetId] = useState('slowed')
   const [error, setError] = useState<string | null>(null)
-  const [stats, setStats] = useState<VoiceStats>({ level: 0, latencyMs: 0 })
+  const [stats, setStats] = useState<VoiceStats>({ level: 0, latencyMs: 0, silentMs: 0 })
 
   const paramsRef = useRef<VoiceParams>(findVoicePreset('slowed').params)
 
@@ -36,7 +38,7 @@ export function useVoice() {
   const stop = useCallback(async () => {
     await engineRef.current!.stop()
     setOn(false)
-    setStats({ level: 0, latencyMs: 0 })
+    setStats({ level: 0, latencyMs: 0, silentMs: 0 })
   }, [])
 
   const selectPreset = useCallback((id: string) => {
@@ -55,10 +57,18 @@ export function useVoice() {
   // а зайві перемальовки React коштують дорожче за сам звук.
   useEffect(() => {
     if (!on) return
+
+    const PERIOD = 50
+    let silent = 0
+
     const id = window.setInterval(() => {
       const engine = engineRef.current!
-      setStats({ level: engine.level(), latencyMs: engine.latencyMs() })
-    }, 50)
+      const level = engine.level()
+      // Поріг трохи вище нуля: у тиші мікрофон однаково дає ледь чутний шум.
+      silent = level > 0.01 ? 0 : silent + PERIOD
+      setStats({ level, latencyMs: engine.latencyMs(), silentMs: silent })
+    }, PERIOD)
+
     return () => clearInterval(id)
   }, [on])
 

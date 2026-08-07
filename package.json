@@ -1,6 +1,6 @@
 {
   "name": "meme-cam",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Meme Cam - камера з мем-лінзами та ефектами звуку",
   "main": "./out/main/index.js",
   "author": "KarllWest",
@@ -18,7 +18,9 @@
     "make:icon": "node scripts/make-icon.mjs",
     "build:filter": "node scripts/build-filter.mjs",
     "dist": "npm run build:filter && npm run build && electron-builder --win",
-    "publish": "npm run build:filter && npm run build && node scripts/publish.mjs"
+    "publish": "npm run build:filter && npm run build && node scripts/publish.mjs",
+    "check:mic": "node scripts/check-mic.mjs",
+    "check:sandbox": "node scripts/check-sandbox.mjs"
   },
   "build": {
     "appId": "com.karllwest.memecam",
