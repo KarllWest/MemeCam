@@ -240,17 +240,33 @@ ffmpeg -f dshow -i video="Meme Cam" -frames:v 1 -update 1 out.png
 Історія лежить у [changelog.ts](src/renderer/src/changelog.ts) і оновлюється разом
 з версією в `package.json`.
 
-Оновлення тягнуться з релізів GitHub. Щоб це запрацювало, потрібен репозиторій:
+Оновлення тягнуться з релізів GitHub. Щоб випустити нову версію:
 
-```bash
-git remote add origin https://github.com/KarllWest/meme-cam.git
-npm run dist                    # збирає інсталятор
-npx electron-builder --publish always   # заливає його в реліз
-```
+1. Підніми `version` у `package.json` і додай запис у `changelog.ts`
+2. Встав токен GitHub у файл `.env` (скопіюй його з `.env.example`):
 
-Репозиторій задано в полі `build.publish` у `package.json` — якщо назва інша,
-поправ `owner` і `repo` там. Поки релізів немає, додаток просто скаже, що
-перевірити не вдалось; у режимі розробки перевірка вимкнена свідомо.
+   ```
+   GH_TOKEN=ghp_твій_токен
+   ```
+
+   Токен: Settings → Developer settings → Personal access tokens →
+   Tokens (classic) → Generate new → scope **`repo`**
+
+3. ```bash
+   npm run publish
+   ```
+
+`.env` у git не потрапляє — про це подбає `.gitignore`. Перевірити можна так:
+`git check-ignore -v .env`.
+
+Репозиторій задано в полі `build.publish` у `package.json`.
+
+**Репозиторій має бути публічним.** Встановлений додаток перевіряє оновлення без
+жодної авторизації — у нього немає твого токена, і з приватного репозиторію він
+побачив би 404. Зашити токен у застосунок не можна: його елементарно дістати
+з файлів.
+
+У режимі розробки перевірка вимкнена свідомо — оновлювати нема чого.
 
 ## Перевірки
 
