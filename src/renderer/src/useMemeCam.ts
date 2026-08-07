@@ -39,7 +39,12 @@ function timestampName(): string {
 export function useMemeCam(
   canvasRef: RefObject<HTMLCanvasElement | null>,
   params: LensParams,
-  overlayLayers: OverlayLayer[]
+  overlayLayers: OverlayLayer[],
+  /**
+   * Частота зйомки. На 60 кадрах камера вдвічі коротше набирає світло, тож
+   * у слабо освітленій кімнаті 30 дають помітно яскравішу картинку.
+   */
+  captureFps: number
 ) {
   const [status, setStatus] = useState<CamStatus>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -104,7 +109,7 @@ export function useMemeCam(
             deviceId: deviceId ? { exact: deviceId } : undefined,
             width: { ideal: VCAM_WIDTH },
             height: { ideal: VCAM_HEIGHT },
-            frameRate: { ideal: VCAM_FPS }
+            frameRate: { ideal: captureFps }
           },
           audio: false
         })
@@ -134,7 +139,9 @@ export function useMemeCam(
         let packMs = 0
         let packCount = 0
 
-        const FRAME_MS = 1000 / VCAM_FPS
+        // Малюємо з частотою зйомки: віртуальна камера однаково оголошує 60
+        // і повторює останній кадр, якщо ми пишемо рідше.
+        const FRAME_MS = 1000 / captureFps
         let lastTick = 0
         let lastDetect = 0
 
@@ -229,7 +236,7 @@ export function useMemeCam(
         stop()
       }
     },
-    [canvasRef, stop]
+    [canvasRef, stop, captureFps]
   )
 
   /** Знімок буде зроблено на найближчому кадрі, вже з ефектом. */

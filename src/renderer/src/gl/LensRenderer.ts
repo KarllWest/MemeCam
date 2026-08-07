@@ -71,9 +71,11 @@ export interface LensParams {
 
 export const DEFAULT_PARAMS: LensParams = {
   mirror: true,
-  exposure: 0.62,
-  contrast: 1.22,
-  saturation: 0.78,
+  // Затемнення потрібне, щоб промінь читався, але не настільки, щоб кадр здавався
+  // зіпсованим. Користувач порівнює зі своєю ж камерою у звичайному застосунку.
+  exposure: 0.86,
+  contrast: 1.1,
+  saturation: 0.92,
   intensity: 1.5,
   coreSize: 0.016,
   streakLen: 0.11,
@@ -100,8 +102,8 @@ export const DEFAULT_PARAMS: LensParams = {
   overlayScale: 1,
   overlayOffsetY: 0,
   bloomStrength: 1.15,
-  bloomThreshold: 0.72,
-  vignette: 0.55,
+  bloomThreshold: 0.78,
+  vignette: 0.32,
   smoothing: 0.55
 }
 

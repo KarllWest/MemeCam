@@ -411,10 +411,20 @@ uniform sampler2D uBloomFar;
 uniform float uBloomStrength;
 uniform float uVignette;
 
-// ACES filmic, наближення Narkowicz — тримає перепал у білому, не в рожевому.
-vec3 aces(vec3 x) {
-  const float a = 2.51, b = 0.03, c = 2.43, d = 0.59, e = 0.14;
-  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+/**
+ * Гасить лише перепал, лишаючи звичайний діапазон недоторканим.
+ *
+ * Тут раніше стояла повна крива ACES, і це була помилка: вона розрахована на
+ * HDR-сцену, а кадр з камери вже готовий до показу. Вона піднімала середні тони
+ * й обрізала білий на 0.8 — через що картинка виходила сірувата й вицвіла.
+ * Тепер усе до порога проходить один в один, а вище — плавно стискається до одиниці.
+ */
+vec3 rolloff(vec3 x) {
+  // Поріг майже на самій вершині: усе, що вміщається в діапазон показу, має
+  // дійти незмінним. Стискається лише перепал від сяйва, що вилазить за одиницю.
+  const float knee = 0.985;
+  vec3 high = knee + (1.0 - knee) * (1.0 - exp(-(x - knee) / (1.0 - knee)));
+  return clamp(mix(x, high, step(vec3(knee), x)), 0.0, 1.0);
 }
 
 void main() {
@@ -422,7 +432,7 @@ void main() {
   vec3 bloom = texture(uBloomNear, vUv).rgb + texture(uBloomFar, vUv).rgb * 0.8;
 
   vec3 c = scene + bloom * uBloomStrength;
-  c = aces(c);
+  c = rolloff(c);
 
   vec2 d = vUv - 0.5;
   float vig = 1.0 - uVignette * dot(d, d) * 2.0;

@@ -2,22 +2,25 @@ import { DEFAULT_PARAMS, type LensParams } from '../gl/LensRenderer'
 import { LM, isLens, type Mask } from './types'
 
 /**
- * Базові параметри для масок без шейдерних ефектів: звичайна камера,
- * лише легка віньєтка й трохи bloom, щоб накладки не виглядали наклеєними.
+ * Базові параметри для масок без шейдерних ефектів.
+ *
+ * Навмисно повністю прозорі: картинка має виглядати рівно так, як її віддає
+ * камера. Будь-яке «легке покращення» тут помітне одразу — користувач порівнює
+ * не з ідеалом, а зі своєю ж камерою у звичайному застосунку.
  */
 export const NEUTRAL_PARAMS: LensParams = {
   ...DEFAULT_PARAMS,
   exposure: 1,
-  contrast: 1.04,
+  contrast: 1,
   saturation: 1,
   intensity: 0,
   streakGain: 0,
   beamGain: 0,
   smokeAmount: 0,
   boltCount: 0,
-  bloomStrength: 0.5,
-  bloomThreshold: 0.85,
-  vignette: 0.22
+  bloomStrength: 0,
+  bloomThreshold: 1,
+  vignette: 0
 }
 
 const glasses = (texture: string, scale: number): Mask['layers'][number] => ({

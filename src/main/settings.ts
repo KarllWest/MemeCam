@@ -24,6 +24,7 @@ export interface Settings {
   micId?: string
   outputId?: string
   target?: 'memecam' | 'obs'
+  captureFps?: number
   mirror?: boolean
 }
 
@@ -46,6 +47,7 @@ function sanitize(raw: unknown): Settings {
     micId: str(r.micId),
     outputId: str(r.outputId),
     target: r.target === 'obs' || r.target === 'memecam' ? r.target : undefined,
+    captureFps: r.captureFps === 30 || r.captureFps === 60 ? r.captureFps : undefined,
     mirror: typeof r.mirror === 'boolean' ? r.mirror : undefined
   }
 }

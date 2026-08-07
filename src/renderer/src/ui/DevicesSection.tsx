@@ -9,6 +9,7 @@ interface Props {
   micId: string
   outputId: string
   target: CameraTarget
+  captureFps: number
   cameraLocked: boolean
   voiceLocked: boolean
   targetLocked: boolean
@@ -16,6 +17,7 @@ interface Props {
   onMic: (id: string) => void
   onOutput: (id: string) => void
   onTarget: (t: CameraTarget) => void
+  onCaptureFps: (fps: number) => void
 }
 
 function DeviceRow({
@@ -65,6 +67,23 @@ export function DevicesSection(p: Props): JSX.Element {
 
       <DeviceRow label="Вихід голосу" value={p.outputId} options={p.outputs}
         fallback="За замовчуванням" disabled={p.voiceLocked} onChange={p.onOutput} />
+
+      <label className="device">
+        <span>Частота зйомки</span>
+        <select
+          value={p.captureFps}
+          onChange={(e) => p.onCaptureFps(Number(e.target.value))}
+          disabled={p.cameraLocked}
+        >
+          <option value={60}>60 — плавніше</option>
+          <option value={30}>30 — яскравіше</option>
+        </select>
+      </label>
+
+      <p className="panel-note">
+        На 60 кадрах камера вдвічі коротше набирає світло. Якщо в кімнаті темнувато,
+        30 дадуть помітно світлішу картинку.
+      </p>
 
       <label className="device">
         <span>Камера в Discord</span>

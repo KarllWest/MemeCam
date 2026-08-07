@@ -36,10 +36,11 @@ export default function App(): JSX.Element {
   const [showUpdates, setShowUpdates] = useState(false)
   const [installing, setInstalling] = useState(false)
   const [restored, setRestored] = useState(false)
+  const [captureFps, setCaptureFps] = useState(60)
   const [notice, setNotice] = useState<{ text: string; tone: 'info' | 'err' } | null>(null)
 
   const { status, error, stats, lastPhoto, start, stop, capture, vcamOn, startVirtualCamera, stopVirtualCamera } =
-    useMemeCam(canvasRef, params, overlayLayers)
+    useMemeCam(canvasRef, params, overlayLayers, captureFps)
 
   const voice = useVoice()
 
@@ -91,6 +92,7 @@ export default function App(): JSX.Element {
       if (typeof s.micId === 'string') setMicId(s.micId)
       if (typeof s.outputId === 'string') setOutId(s.outputId)
       if (s.target === 'obs' || s.target === 'memecam') setTarget(s.target)
+      if (s.captureFps === 30 || s.captureFps === 60) setCaptureFps(s.captureFps)
       setRestored(true)
     })
     // Свідомо один раз при старті: далі стан веде користувач.
@@ -109,9 +111,21 @@ export default function App(): JSX.Element {
       micId,
       outputId: outId,
       target,
+      captureFps,
       mirror: params.mirror
     })
-  }, [restored, maskId, voice.presetId, semitones, deviceId, micId, outId, target, params.mirror])
+  }, [
+    restored,
+    maskId,
+    voice.presetId,
+    semitones,
+    deviceId,
+    micId,
+    outId,
+    target,
+    captureFps,
+    params.mirror
+  ])
 
   useEffect(() => {
     if (running) void refreshDevices()
@@ -408,6 +422,8 @@ export default function App(): JSX.Element {
               onMic={setMicId}
               onOutput={setOutId}
               onTarget={setTarget}
+              captureFps={captureFps}
+              onCaptureFps={setCaptureFps}
             />
           </SettingsPanel>
         )}
