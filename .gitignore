@@ -1,0 +1,11 @@
+node_modules/
+out/
+dist/
+release/
+native/build/
+build/icon.png
+*.log
+.DS_Store
+
+# Ассети MediaPipe відновлює `npm run setup` — тримати їх у git немає сенсу
+src/renderer/public/mediapipe/

@@ -1,0 +1,84 @@
+{
+  "name": "meme-cam",
+  "version": "0.2.0",
+  "description": "Meme Cam - камера з мем-лінзами та ефектами звуку",
+  "main": "./out/main/index.js",
+  "author": "KarllWest",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/run-electron.mjs dev",
+    "build": "tsc --noEmit && node scripts/check-shaders.mjs && electron-vite build",
+    "start": "node scripts/run-electron.mjs preview",
+    "setup": "node scripts/setup-assets.mjs",
+    "typecheck": "tsc --noEmit",
+    "check:shaders": "node scripts/check-shaders.mjs",
+    "check:masks": "node scripts/check-masks.mjs",
+    "test:vcam": "node scripts/test-virtualcam.mjs",
+    "make:icon": "node scripts/make-icon.mjs",
+    "build:filter": "node scripts/build-filter.mjs",
+    "dist": "npm run build:filter && npm run build && electron-builder --win"
+  },
+  "build": {
+    "appId": "com.karllwest.memecam",
+    "productName": "Meme Cam",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/node_modules/koffi/**",
+      "**/node_modules/@koromix/**"
+    ],
+    "extraResources": [
+      {
+        "from": "native/build/memecam-filter.dll",
+        "to": "memecam-filter.dll"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Meme Cam",
+      "include": "build/installer.nsh",
+      "perMachine": false,
+      "allowElevation": false
+    },
+    "portable": {
+      "artifactName": "MemeCam-portable-${version}.exe"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "KarllWest",
+      "repo": "MemeCam"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "koffi": "^3.1.4"
+  },
+  "devDependencies": {
+    "@mediapipe/tasks-vision": "^0.10.18",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11"
+  }
+}
