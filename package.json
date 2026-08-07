@@ -62,7 +62,8 @@
     "publish": {
       "provider": "github",
       "owner": "KarllWest",
-      "repo": "MemeCam"
+      "repo": "MemeCam",
+      "releaseType": "release"
     }
   },
   "dependencies": {
