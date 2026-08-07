@@ -8,9 +8,13 @@ interface Props {
   mask: Mask
   params: LensParams
   hasOverlays: boolean
+  semitones: number
   onChange: <K extends keyof LensParams>(key: K, value: LensParams[K]) => void
+  onSemitones: (v: number) => void
   onReset: () => void
   onClose: () => void
+  /** Секція вибору пристроїв — її складає App, бо стан живе там. */
+  children?: React.ReactNode
 }
 
 /** Тонке налаштування поточної маски. Виїжджає збоку, щоб не тіснити кадр. */
@@ -18,9 +22,12 @@ export function SettingsPanel({
   mask,
   params,
   hasOverlays,
+  semitones,
   onChange,
+  onSemitones,
   onReset,
-  onClose
+  onClose,
+  children
 }: Props): JSX.Element {
   const set = onChange
   const [hotkeys, setHotkeys] = useState<
@@ -59,6 +66,18 @@ export function SettingsPanel({
             Скинути
           </button>
         </div>
+
+        {children}
+
+        <h3>Голос</h3>
+        <label className="slider">
+          <span className="slider-head">
+            <span>Глибина тону</span>
+            <b>{semitones > 0 ? `+${semitones}` : semitones} півтонів</b>
+          </span>
+          <input type="range" min={-18} max={12} step={1} value={semitones}
+            onChange={(e) => onSemitones(Number(e.target.value))} />
+        </label>
 
         {hasOverlays && (
           <>

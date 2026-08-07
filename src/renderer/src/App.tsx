@@ -4,8 +4,10 @@ import { MASKS, findMask, paramsForMask } from './masks/registry'
 import { isOverlay } from './masks/types'
 import { useMemeCam, VCAM_FPS, type CameraTarget } from './useMemeCam'
 import { useVoice } from './useVoice'
+import { findVoicePreset } from './audio/presets'
 import { MaskCarousel } from './ui/MaskCarousel'
 import { VoiceBar } from './ui/VoiceBar'
+import { DevicesSection } from './ui/DevicesSection'
 import { SettingsPanel } from './ui/SettingsPanel'
 import { UpdatesDialog } from './ui/UpdatesDialog'
 
@@ -247,33 +249,21 @@ export default function App(): JSX.Element {
 
           <div className="actionbar">
             <div className="ab-side">
-              <select
-                value={deviceId}
-                onChange={(e) => setDeviceId(e.target.value)}
-                disabled={running}
-                title="Джерело відео"
+              <button
+                className={`btn wide ${running ? '' : 'primary'}`}
+                onClick={() => (running ? stop() : void start(deviceId || undefined))}
+                disabled={status === 'loading'}
               >
-                <option value="">Камера за замовчуванням</option>
-                {devices.map((d, i) => (
-                  <option key={d.deviceId} value={d.deviceId}>
-                    {d.label || `Камера ${i + 1}`}
-                  </option>
-                ))}
-              </select>
+                {running ? '⏹ Вимкнути камеру' : '▶ Увімкнути камеру'}
+              </button>
 
-              {running ? (
-                <button className="btn" onClick={stop}>
-                  Стоп
-                </button>
-              ) : (
-                <button
-                  className="btn primary"
-                  onClick={() => void start(deviceId || undefined)}
-                  disabled={status === 'loading'}
-                >
-                  Увімкнути камеру
-                </button>
-              )}
+              <button
+                className={`btn wide ${voice.on ? 'live' : 'accent'}`}
+                onClick={() => void toggleVoice()}
+                title="Ctrl + Alt + V"
+              >
+                {voice.on ? '🎤 Голос іде' : '🎤 Увімкнути голос'}
+              </button>
             </div>
 
             <button
@@ -287,23 +277,13 @@ export default function App(): JSX.Element {
             </button>
 
             <div className="ab-side right">
-              <select
-                value={target}
-                onChange={(e) => setTarget(e.target.value as CameraTarget)}
-                disabled={vcamOn}
-                title="Під якою назвою камера з'явиться в Discord"
-              >
-                <option value="memecam">Пристрій «Meme Cam»</option>
-                <option value="obs">Пристрій «OBS Virtual Camera»</option>
-              </select>
-
               <button
-                className={`btn ${vcamOn ? 'live' : 'accent'}`}
+                className={`btn wide ${vcamOn ? 'live' : 'accent'}`}
                 onClick={() => void toggleBroadcast()}
                 disabled={!running || needsDriver}
                 title={`Віддає ${VCAM_FPS} кадрів/с у систему як звичайну веб-камеру`}
               >
-                {vcamOn ? 'Зупинити трансляцію' : 'Транслювати в Discord'}
+                {vcamOn ? '⏹ Зупинити трансляцію' : '📡 Транслювати в Discord'}
               </button>
             </div>
           </div>
@@ -312,23 +292,10 @@ export default function App(): JSX.Element {
             on={voice.on}
             presetId={voice.presetId}
             stats={voice.stats}
-            error={voice.error}
-            inputs={audioIn}
-            outputs={audioOut}
-            inputId={micId}
-            outputId={outId}
-            semitones={semitones}
-            onInput={setMicId}
-            onOutput={setOutId}
             onPreset={(id) => {
               voice.selectPreset(id)
-              setSemitones(voice.params.semitones)
+              setSemitones(findVoicePreset(id).params.semitones)
             }}
-            onSemitones={(v) => {
-              setSemitones(v)
-              voice.tune('semitones', v)
-            }}
-            onToggle={() => void toggleVoice()}
           />
 
           <div className="notices">
@@ -377,10 +344,32 @@ export default function App(): JSX.Element {
             mask={mask}
             params={params}
             hasOverlays={overlayLayers.length > 0}
+            semitones={semitones}
             onChange={set}
+            onSemitones={(v) => {
+              setSemitones(v)
+              voice.tune('semitones', v)
+            }}
             onReset={() => selectMask(maskId)}
             onClose={() => setShowSettings(false)}
-          />
+          >
+            <DevicesSection
+              cameras={devices}
+              mics={audioIn}
+              outputs={audioOut}
+              cameraId={deviceId}
+              micId={micId}
+              outputId={outId}
+              target={target}
+              cameraLocked={running}
+              voiceLocked={voice.on}
+              targetLocked={vcamOn}
+              onCamera={setDeviceId}
+              onMic={setMicId}
+              onOutput={setOutId}
+              onTarget={setTarget}
+            />
+          </SettingsPanel>
         )}
       </div>
 
