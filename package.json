@@ -1,6 +1,6 @@
 {
   "name": "meme-cam",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Meme Cam - камера з мем-лінзами та ефектами звуку",
   "main": "./out/main/index.js",
   "author": "KarllWest",

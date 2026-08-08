@@ -94,9 +94,17 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 640,
     show: false,
-    backgroundColor: '#0a0a0c',
+    backgroundColor: '#07070d',
     autoHideMenuBar: true,
     title: 'Meme Cam',
+    // Ховаємо системну рамку, але лишаємо рідні кнопки вікна накладкою: так
+    // інтерфейс суцільно темний, а Snap Layouts і поведінка кнопок не ламаються.
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#0e0e18',
+      symbolColor: '#9494b0',
+      height: 56
+    },
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       // Пісочниця вмикається, бо preload користується лише ipcRenderer.

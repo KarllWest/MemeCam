@@ -40,8 +40,18 @@ export default function App(): JSX.Element {
   const [favorites, setFavorites] = useState<string[]>([])
   const [notice, setNotice] = useState<{ text: string; tone: 'info' | 'err' } | null>(null)
 
-  const { status, error, stats, lastPhoto, start, stop, capture, vcamOn, startVirtualCamera, stopVirtualCamera } =
-    useMemeCam(canvasRef, params, overlayLayers, captureFps)
+  const {
+    status,
+    error,
+    stats,
+    shots,
+    start,
+    stop,
+    capture,
+    vcamOn,
+    startVirtualCamera,
+    stopVirtualCamera
+  } = useMemeCam(canvasRef, params, overlayLayers, captureFps)
 
   const voice = useVoice()
 
@@ -395,13 +405,20 @@ export default function App(): JSX.Element {
               <p className={`notice ${notice.tone === 'err' ? 'err' : ''}`}>{notice.text}</p>
             )}
 
-            {lastPhoto && (
-              <p className="notice">
-                Збережено: <code>{lastPhoto}</code>
-                <button className="link" onClick={() => void window.memecam.revealInFolder(lastPhoto)}>
-                  показати в теці
-                </button>
-              </p>
+            {shots.length > 0 && (
+              <div className="shots">
+                <span className="shots-label">Знімки</span>
+                {shots.map((s) => (
+                  <button
+                    key={s.path}
+                    className="shot"
+                    onClick={() => void window.memecam.revealInFolder(s.path)}
+                    title={`${s.path}\nВідкрити в теці`}
+                  >
+                    <img src={s.url} alt="" />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         </main>

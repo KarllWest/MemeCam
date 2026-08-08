@@ -16,6 +16,15 @@ interface Stats {
   packMs: number
 }
 
+/** Зроблений знімок: шлях на диску й посилання на мініатюру в пам'яті. */
+export interface Shot {
+  path: string
+  url: string
+}
+
+/** Скільки останніх знімків тримати в стрічці. */
+const SHOT_HISTORY = 8
+
 /** Кадр віртуальної камери. Ширина кратна 4 і парна висота — вимога пакування NV12. */
 export const VCAM_WIDTH = 1280
 export const VCAM_HEIGHT = 720
@@ -56,7 +65,7 @@ export function useMemeCam(
   const [status, setStatus] = useState<CamStatus>('idle')
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState<Stats>({ fps: 0, faceFound: false, packMs: 0 })
-  const [lastPhoto, setLastPhoto] = useState<string | null>(null)
+  const [shots, setShots] = useState<Shot[]>([])
 
   // Через ref, а не залежність: зміна маски чи повзунка не має перезапускати цикл.
   const paramsRef = useRef(params)
@@ -223,9 +232,17 @@ export function useMemeCam(
             // toBlob знімає буфер синхронно на момент виклику — саме тому одразу після render.
             r.canvas.toBlob((blob) => {
               if (!blob) return
+              const url = URL.createObjectURL(blob)
+
               void blob.arrayBuffer().then(async (buf) => {
                 const path = await window.memecam.savePhoto(new Uint8Array(buf), timestampName())
-                setLastPhoto(path)
+                setShots((prev) => {
+                  const next = [{ path, url }, ...prev]
+                  // Посилання на витіснені мініатюри звільняємо, інакше пам'ять
+                  // тектиме на кожному знімку.
+                  for (const old of next.slice(SHOT_HISTORY)) URL.revokeObjectURL(old.url)
+                  return next.slice(0, SHOT_HISTORY)
+                })
               })
             }, 'image/png')
           }
@@ -294,7 +311,7 @@ export function useMemeCam(
     status,
     error,
     stats,
-    lastPhoto,
+    shots,
     start,
     stop,
     capture,

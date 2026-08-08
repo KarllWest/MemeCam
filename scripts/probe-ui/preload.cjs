@@ -26,6 +26,10 @@ contextBridge.exposeInMainWorld('memecam', {
     list: async () => [],
     onPress: () => () => {}
   },
+  settings: {
+    load: async () => ({ favorites: ['deal', 'dog'] }),
+    save: async () => {}
+  },
   filter: {
     status: async () => ({ available: true, registered: true, current: true, dllPath: '' }),
     register: async () => {},
