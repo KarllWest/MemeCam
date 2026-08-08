@@ -69,6 +69,42 @@ export function SettingsPanel({
 
         {children}
 
+        <h3>Фон</h3>
+        <div className="seg">
+          {(
+            [
+              [0, 'Як є'],
+              [1, 'Розмити'],
+              [2, 'Колір']
+            ] as const
+          ).map(([mode, label]) => (
+            <button
+              key={mode}
+              className={`seg-btn ${params.bgMode === mode ? 'active' : ''}`}
+              onClick={() => set('bgMode', mode)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {params.bgMode === 1 && (
+          <Slider label="Сила розмиття" value={params.bgBlur} min={1} max={8} step={0.1}
+            onChange={(v) => set('bgBlur', v)} />
+        )}
+
+        {params.bgMode === 2 && (
+          <ColorInput label="Колір фону" value={params.bgColor}
+            onChange={(v) => set('bgColor', v)} />
+        )}
+
+        {params.bgMode !== 0 && (
+          <p className="panel-note">
+            Людина відділяється від фону моделлю. Що рівніше освітлення й що більше
+            контраст зі стіною — то чистіший край.
+          </p>
+        )}
+
         <h3>Голос</h3>
         <label className="slider">
           <span className="slider-head">

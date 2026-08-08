@@ -25,6 +25,7 @@ export interface Settings {
   outputId?: string
   target?: 'memecam' | 'obs'
   captureFps?: number
+  favorites?: string[]
   mirror?: boolean
 }
 
@@ -48,6 +49,10 @@ function sanitize(raw: unknown): Settings {
     outputId: str(r.outputId),
     target: r.target === 'obs' || r.target === 'memecam' ? r.target : undefined,
     captureFps: r.captureFps === 30 || r.captureFps === 60 ? r.captureFps : undefined,
+    // Обмежуємо довжину: у файл не має потрапляти довільний масив з вікна.
+    favorites: Array.isArray(r.favorites)
+      ? r.favorites.filter((f): f is string => typeof f === 'string' && f.length <= 64).slice(0, 64)
+      : undefined,
     mirror: typeof r.mirror === 'boolean' ? r.mirror : undefined
   }
 }

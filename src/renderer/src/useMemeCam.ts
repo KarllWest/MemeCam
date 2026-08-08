@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { LensRenderer, type LensParams } from './gl/LensRenderer'
 import { FaceTracker, type TrackedFace } from './face/FaceTracker'
+import { Segmenter } from './face/Segmenter'
 import type { OverlayLayer } from './masks/types'
 
 export type CamStatus = 'idle' | 'loading' | 'running' | 'error'
@@ -25,6 +26,12 @@ export const VCAM_FPS = 60
  * частина кадру, а обличчя не рухається настільки швидко, щоб це було помітно.
  */
 const DETECT_MS = 1000 / 30
+
+/**
+ * Як часто перераховувати маску фону. Ще рідше за обличчя: модель важча, а межа
+ * людини й стіни змінюється повільно — на 15 разах за секунду око різниці не бачить.
+ */
+const SEGMENT_MS = 1000 / 15
 
 function timestampName(): string {
   const d = new Date()
@@ -61,6 +68,7 @@ export function useMemeCam(
   const streamRef = useRef<MediaStream | null>(null)
   const rendererRef = useRef<LensRenderer | null>(null)
   const trackerRef = useRef<FaceTracker | null>(null)
+  const segmenterRef = useRef<Segmenter | null>(null)
   const rafRef = useRef<number | null>(null)
   const timerRef = useRef<number | null>(null)
   const captureRef = useRef(false)
@@ -81,6 +89,9 @@ export function useMemeCam(
 
     trackerRef.current?.dispose()
     trackerRef.current = null
+
+    segmenterRef.current?.dispose()
+    segmenterRef.current = null
 
     videoRef.current = null
 
@@ -129,6 +140,18 @@ export function useMemeCam(
         await tracker.init()
         trackerRef.current = tracker
 
+        // Модель фону вантажимо в фоні: без неї камера вже працює, тож змушувати
+        // чекати на неї при старті немає сенсу.
+        const segmenter = new Segmenter()
+        void segmenter
+          .init()
+          .then(() => {
+            segmenterRef.current = segmenter
+          })
+          .catch(() => {
+            // Заміна фону просто лишиться недоступною — решта працює.
+          })
+
         setStatus('running')
 
         let lastPose: TrackedFace | null = null
@@ -144,6 +167,7 @@ export function useMemeCam(
         const FRAME_MS = 1000 / captureFps
         let lastTick = 0
         let lastDetect = 0
+        let lastSegment = 0
 
         /**
          * rAF прив'язаний до композитора вікна: варто перейти в Discord — і кадри
@@ -182,6 +206,14 @@ export function useMemeCam(
             lastVideoTime = v.currentTime
             lastDetect = now
             lastPose = t.detect(v, now, p.mirror)
+          }
+
+          // Маску рахуємо лише коли фон справді підмінюється.
+          const seg = segmenterRef.current
+          if (p.bgMode !== 0 && seg?.ready && now - lastSegment >= SEGMENT_MS) {
+            lastSegment = now
+            const mask = seg.segment(v, now)
+            if (mask) r.setMask(mask, seg.width, seg.height)
           }
 
           r.render(v, lastPose, p, overlaysRef.current)

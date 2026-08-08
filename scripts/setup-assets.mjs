@@ -7,9 +7,18 @@ import { fileURLToPath } from 'node:url'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const publicDir = resolve(root, 'src/renderer/public/mediapipe')
 
-const MODEL_URL =
-  'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
-const modelPath = resolve(publicDir, 'face_landmarker.task')
+const MODELS = [
+  {
+    name: 'face_landmarker.task',
+    url: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+    about: 'точки обличчя'
+  },
+  {
+    name: 'selfie_segmenter.tflite',
+    url: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite',
+    about: 'відділення людини від фону'
+  }
+]
 
 async function exists(p) {
   try {
@@ -27,15 +36,19 @@ const wasmSrc = resolve(root, 'node_modules/@mediapipe/tasks-vision/wasm')
 await cp(wasmSrc, resolve(publicDir, 'wasm'), { recursive: true })
 console.log('✓ wasm скопійовано з node_modules')
 
-// 2. Модель обличчя (~3.8 МБ) — качаємо один раз.
-if (await exists(modelPath)) {
-  console.log('✓ face_landmarker.task вже на місці, пропускаю')
-} else {
-  console.log('⇣ качаю face_landmarker.task ...')
-  const res = await fetch(MODEL_URL)
-  if (!res.ok) throw new Error(`Не вдалось завантажити модель: HTTP ${res.status}`)
-  await writeFile(modelPath, Buffer.from(await res.arrayBuffer()))
-  console.log('✓ модель завантажено')
+// 2. Моделі — качаємо один раз, далі додаток працює без інтернету.
+for (const model of MODELS) {
+  const path = resolve(publicDir, model.name)
+  if (await exists(path)) {
+    console.log(`✓ ${model.name} вже на місці, пропускаю`)
+    continue
+  }
+
+  console.log(`⇣ качаю ${model.name} (${model.about}) ...`)
+  const res = await fetch(model.url)
+  if (!res.ok) throw new Error(`Не вдалось завантажити ${model.name}: HTTP ${res.status}`)
+  await writeFile(path, Buffer.from(await res.arrayBuffer()))
+  console.log(`✓ ${model.name} завантажено`)
 }
 
 console.log('\nГотово. Ассети в src/renderer/public/mediapipe/')

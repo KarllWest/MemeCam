@@ -14,23 +14,53 @@ void main() {
   gl_Position = vec4(aPos, 0.0, 1.0);
 }`
 
-/** Кадр з камери + кольорокорекція "темна кімната". */
+/**
+ * Кадр з камери, підміна фону й кольорокорекція.
+ *
+ * Маска приходить з моделі сегментації у власній роздільності й у власній
+ * орієнтації — вона рахується з незеркаленого кадру, тому дзеркалення
+ * застосовується до обох вибірок однаково.
+ */
 export const SCENE_FS = /* glsl */ `#version 300 es
 precision highp float;
 in vec2 vUv;
 out vec4 fragColor;
 
 uniform sampler2D uVideo;
-uniform float uMirror;      // 1.0 = дзеркалити по X (селфі)
-uniform float uExposure;    // множник яскравості сцени
+uniform sampler2D uBlurred;   // той самий кадр, розмитий — фон для режиму «розмити»
+uniform sampler2D uMask;      // 1 = людина, 0 = фон
+uniform float uMirror;        // 1.0 = дзеркалити по X (селфі)
+uniform float uExposure;      // множник яскравості сцени
 uniform float uContrast;
 uniform float uSaturation;
+uniform float uBgMode;        // 0 — без заміни, 1 — розмити, 2 — колір
+uniform vec3  uBgColor;
+uniform float uMaskSoftness;  // згладжування краю маски в частках кадру
 
 void main() {
   vec2 uv = vUv;
   if (uMirror > 0.5) uv.x = 1.0 - uv.x;
 
   vec3 c = texture(uVideo, uv).rgb;
+
+  if (uBgMode > 0.5) {
+    // Кадр камери лягає в текстуру перевернутим по вертикалі, а маска приходить
+    // масивом як є — тому для неї переворот робимо тут, явно.
+    vec2 muv = vec2(uv.x, 1.0 - uv.y);
+
+    // Маску злегка розмиваємо вручну: модель дає різкий контур по пікселях,
+    // і без цього людина виглядає вирізаною ножицями.
+    float m = 0.0;
+    m += texture(uMask, muv).r * 0.4;
+    m += texture(uMask, muv + vec2(uMaskSoftness, 0.0)).r * 0.15;
+    m += texture(uMask, muv - vec2(uMaskSoftness, 0.0)).r * 0.15;
+    m += texture(uMask, muv + vec2(0.0, uMaskSoftness)).r * 0.15;
+    m += texture(uMask, muv - vec2(0.0, uMaskSoftness)).r * 0.15;
+    m = smoothstep(0.35, 0.65, m);
+
+    vec3 bg = uBgMode > 1.5 ? uBgColor : texture(uBlurred, uv).rgb;
+    c = mix(bg, c, m);
+  }
 
   c *= uExposure;
   c = (c - 0.5) * uContrast + 0.5;
@@ -39,6 +69,16 @@ void main() {
   c = mix(vec3(l), c, uSaturation);
 
   fragColor = vec4(max(c, 0.0), 1.0);
+}`
+
+/** Кадр з камери без обробки — потрібен, щоб зробити з нього розмитий фон. */
+export const VIDEO_COPY_FS = /* glsl */ `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 fragColor;
+uniform sampler2D uVideo;
+void main() {
+  fragColor = vec4(texture(uVideo, vUv).rgb, 1.0);
 }`
 
 /**

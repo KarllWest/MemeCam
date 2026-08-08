@@ -38,4 +38,16 @@ const code = await new Promise((res) => {
   child.on('exit', (c) => res(c ?? 1))
 })
 
-process.exit(code)
+if (code !== 0) process.exit(code)
+
+// Друга проба: заміна фону. Найтихіша помилка тут — переворот маски.
+const bgCode = await new Promise((res) => {
+  const child = spawn(electronExe, [join(root, 'scripts/probe-color/bg-main.cjs')], {
+    stdio: 'inherit',
+    env
+  })
+  child.on('error', () => res(1))
+  child.on('exit', (c) => res(c ?? 1))
+})
+
+if (bgCode !== 0) process.exit(bgCode)

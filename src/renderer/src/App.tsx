@@ -37,6 +37,7 @@ export default function App(): JSX.Element {
   const [installing, setInstalling] = useState(false)
   const [restored, setRestored] = useState(false)
   const [captureFps, setCaptureFps] = useState(60)
+  const [favorites, setFavorites] = useState<string[]>([])
   const [notice, setNotice] = useState<{ text: string; tone: 'info' | 'err' } | null>(null)
 
   const { status, error, stats, lastPhoto, start, stop, capture, vcamOn, startVirtualCamera, stopVirtualCamera } =
@@ -93,6 +94,7 @@ export default function App(): JSX.Element {
       if (typeof s.outputId === 'string') setOutId(s.outputId)
       if (s.target === 'obs' || s.target === 'memecam') setTarget(s.target)
       if (s.captureFps === 30 || s.captureFps === 60) setCaptureFps(s.captureFps)
+      if (Array.isArray(s.favorites)) setFavorites(s.favorites.filter((f) => typeof f === 'string'))
       setRestored(true)
     })
     // Свідомо один раз при старті: далі стан веде користувач.
@@ -112,6 +114,7 @@ export default function App(): JSX.Element {
       outputId: outId,
       target,
       captureFps,
+      favorites,
       mirror: params.mirror
     })
   }, [
@@ -124,6 +127,7 @@ export default function App(): JSX.Element {
     outId,
     target,
     captureFps,
+    favorites,
     params.mirror
   ])
 
@@ -294,7 +298,16 @@ export default function App(): JSX.Element {
               </div>
             )}
 
-            <MaskCarousel selected={maskId} onSelect={selectMask} />
+            <MaskCarousel
+              selected={maskId}
+              favorites={favorites}
+              onSelect={selectMask}
+              onToggleFavorite={(id) =>
+                setFavorites((prev) =>
+                  prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+                )
+              }
+            />
           </div>
 
           <div className="actionbar">
