@@ -41,15 +41,24 @@ export function useVoice() {
     setStats({ level: 0, latencyMs: 0, silentMs: 0 })
   }, [])
 
-  const selectPreset = useCallback((id: string) => {
+  /**
+   * @param params набір для власних пресетів; для вбудованих береться з реєстру
+   */
+  const selectPreset = useCallback((id: string, params?: VoiceParams) => {
     setPresetId(id)
-    paramsRef.current = findVoicePreset(id).params
+    paramsRef.current = params ? { ...params } : findVoicePreset(id).params
     engineRef.current!.apply(paramsRef.current)
   }, [])
 
   /** Точкова правка поверх пресета — наприклад, глибина зсуву тону. */
   const tune = useCallback(<K extends keyof VoiceParams>(key: K, value: VoiceParams[K]) => {
     paramsRef.current = { ...paramsRef.current, [key]: value }
+    engineRef.current!.apply(paramsRef.current)
+  }, [])
+
+  /** Ставить одразу весь набір — це редактор під час правки. */
+  const applyParams = useCallback((params: VoiceParams) => {
+    paramsRef.current = { ...params }
     engineRef.current!.apply(paramsRef.current)
   }, [])
 
@@ -88,6 +97,7 @@ export function useVoice() {
     start,
     stop,
     selectPreset,
-    tune
+    tune,
+    applyParams
   }
 }

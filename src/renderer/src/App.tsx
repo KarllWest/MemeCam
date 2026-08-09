@@ -4,10 +4,11 @@ import { MASKS, findMask, paramsForMask } from './masks/registry'
 import { isOverlay, isWarp } from './masks/types'
 import { toMask, type UserMask } from './masks/userMasks'
 import { MaskEditor } from './ui/MaskEditor'
+import { VoiceEditor, type UserVoice } from './ui/VoiceEditor'
 import { useMemeCam, VCAM_FPS, type CameraTarget } from './useMemeCam'
 import { useVoice } from './useVoice'
 import { useRecorder } from './useRecorder'
-import { findVoicePreset } from './audio/presets'
+import { VOICE_PRESETS } from './audio/presets'
 import { MaskCarousel } from './ui/MaskCarousel'
 import { VoiceBar } from './ui/VoiceBar'
 import { DevicesSection } from './ui/DevicesSection'
@@ -73,6 +74,34 @@ export default function App(): JSX.Element {
   const voice = useVoice()
   const recorder = useRecorder()
 
+  const [userVoices, setUserVoices] = useState<UserVoice[]>([])
+  const [editingVoice, setEditingVoice] = useState<UserVoice | null>(null)
+  const [showVoiceEditor, setShowVoiceEditor] = useState(false)
+
+  // Власні пресети стають у той самий список, що й вбудовані.
+  const allVoices = useMemo(
+    () => [
+      ...VOICE_PRESETS,
+      ...userVoices.map((v) => ({
+        id: v.id,
+        name: v.name,
+        icon: v.icon,
+        hint: 'Твій пресет',
+        params: v.params
+      }))
+    ],
+    [userVoices]
+  )
+
+  const selectVoice = useCallback(
+    (id: string) => {
+      const found = allVoices.find((v) => v.id === id)
+      voice.selectPreset(id, found?.params)
+      if (found) setSemitones(found.params.semitones)
+    },
+    [allVoices, voice]
+  )
+
   const toggleRecording = useCallback(() => {
     if (recorder.recording) {
       recorder.stop()
@@ -118,6 +147,7 @@ export default function App(): JSX.Element {
     void refreshDevices()
     void refreshFilter()
     void window.memecam.masks.list().then(setUserMasks)
+    void window.memecam.voices.list().then(setUserVoices)
     void window.memecam.updates.state().then(setUpdate)
     return window.memecam.updates.onChange(setUpdate)
   }, [refreshDevices, refreshFilter])
@@ -446,12 +476,19 @@ export default function App(): JSX.Element {
             presetId={voice.presetId}
             stats={voice.stats}
             error={voice.error}
+            presets={allVoices}
+            userVoiceIds={userVoices.map((v) => v.id)}
             outputLabel={
               audioOut.find((d) => d.deviceId === outId)?.label || 'системний вихід за замовчуванням'
             }
-            onPreset={(id) => {
-              voice.selectPreset(id)
-              setSemitones(findVoicePreset(id).params.semitones)
+            onPreset={selectVoice}
+            onEdit={(id) => {
+              setEditingVoice(userVoices.find((v) => v.id === id) ?? null)
+              setShowVoiceEditor(true)
+            }}
+            onCreate={() => {
+              setEditingVoice(null)
+              setShowVoiceEditor(true)
             }}
           />
 
@@ -543,6 +580,45 @@ export default function App(): JSX.Element {
               просто надіслати.
             </p>
 
+            <h3>Свої голоси</h3>
+            <div className="panel-row">
+              <button
+                className="btn sm"
+                onClick={() => {
+                  void window.memecam.voices
+                    .importVoice()
+                    .then((v) => v && setUserVoices(v))
+                    .catch((e) =>
+                      setNotice({ text: e instanceof Error ? e.message : String(e), tone: 'err' })
+                    )
+                }}
+              >
+                Імпортувати файл
+              </button>
+              {userVoices.some((v) => v.id === voice.presetId) && (
+                <button
+                  className="btn sm"
+                  onClick={() => void window.memecam.voices.exportVoice(voice.presetId)}
+                >
+                  Поділитись
+                </button>
+              )}
+            </div>
+
+            {userVoices.some((v) => v.id === voice.presetId) && (
+              <button
+                className="btn sm ghost"
+                onClick={() => {
+                  void window.memecam.voices.remove(voice.presetId).then((v) => {
+                    setUserVoices(v)
+                    selectVoice(VOICE_PRESETS[0].id)
+                  })
+                }}
+              >
+                Видалити цей голос
+              </button>
+            )}
+
             <DevicesSection
               cameras={devices}
               mics={audioIn}
@@ -573,6 +649,24 @@ export default function App(): JSX.Element {
           onClose={() => {
             setShowEditor(false)
             setEditing(null)
+          }}
+        />
+      )}
+
+      {showVoiceEditor && (
+        <VoiceEditor
+          editing={editingVoice}
+          startFrom={voice.params}
+          micOn={voice.on}
+          onPreview={(params) => {
+            // Під час правки чуємо її одразу, при закритті — вертаємо пресет.
+            if (params) voice.applyParams(params)
+            else selectVoice(voice.presetId)
+          }}
+          onSaved={setUserVoices}
+          onClose={() => {
+            setShowVoiceEditor(false)
+            setEditingVoice(null)
           }}
         />
       )}

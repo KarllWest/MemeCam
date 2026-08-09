@@ -11,6 +11,13 @@ import {
   importUserMask,
   pruneUnusedImages
 } from './userMasks'
+import {
+  loadUserVoices,
+  saveUserVoice,
+  deleteUserVoice,
+  exportUserVoice,
+  importUserVoice
+} from './userVoices'
 import { pathToFileURL } from 'node:url'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { VirtualCamera, type CameraTarget } from './virtualCamera'
@@ -272,6 +279,14 @@ app.whenReady().then(() => {
   ipcMain.handle('masks:pickImage', () => pickImage())
   ipcMain.handle('masks:export', (_e, id: unknown) => exportUserMask(id))
   ipcMain.handle('masks:import', () => importUserMask())
+
+  // --- Власні пресети голосу ---
+
+  ipcMain.handle('voices:list', () => loadUserVoices())
+  ipcMain.handle('voices:save', (_e, voice: unknown) => saveUserVoice(voice))
+  ipcMain.handle('voices:delete', (_e, id: unknown) => deleteUserVoice(id))
+  ipcMain.handle('voices:export', (_e, id: unknown) => exportUserVoice(id))
+  ipcMain.handle('voices:import', () => importUserVoice())
 
   // --- Гарячі клавіші ---
 

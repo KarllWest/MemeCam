@@ -34,6 +34,13 @@ contextBridge.exposeInMainWorld('memecam', {
     exportMask: async () => null,
     importMask: async () => null
   },
+  voices: {
+    list: async () => [],
+    save: async () => [],
+    remove: async () => [],
+    exportVoice: async () => null,
+    importVoice: async () => null
+  },
   settings: {
     load: async () => ({ favorites: ['deal', 'dog'] }),
     save: async () => {}

@@ -1,15 +1,20 @@
 import type { JSX } from 'react'
-import { VOICE_PRESETS } from '../audio/presets'
+import type { VoicePreset } from '../audio/presets'
 import type { VoiceStats } from '../useVoice'
 
 interface Props {
   on: boolean
   presetId: string
+  presets: VoicePreset[]
+  /** Які з пресетів створив користувач — лише їх можна правити. */
+  userVoiceIds: string[]
   stats: VoiceStats
   error: string | null
   /** Куди йде оброблений голос — щоб було видно, що він не в ті навушники. */
   outputLabel: string
   onPreset: (id: string) => void
+  onEdit: (id: string) => void
+  onCreate: () => void
 }
 
 /**
@@ -19,10 +24,14 @@ interface Props {
 export function VoiceBar({
   on,
   presetId,
+  presets,
+  userVoiceIds,
   stats,
   error,
   outputLabel,
-  onPreset
+  onPreset,
+  onEdit,
+  onCreate
 }: Props): JSX.Element {
   // Мовчання довше трьох секунд майже завжди означає, що мікрофон зайняв
   // хтось інший — сам по собі він так надовго не замовкає.
@@ -41,17 +50,35 @@ export function VoiceBar({
         </div>
 
         <div className="voice-presets">
-          {VOICE_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              className={`vp ${p.id === presetId ? 'active' : ''}`}
-              onClick={() => onPreset(p.id)}
-              title={p.hint}
-            >
-              <span className="vp-icon">{p.icon}</span>
-              <span className="vp-name">{p.name}</span>
-            </button>
+          {presets.map((p) => (
+            <div key={p.id} className="vp-slot">
+              <button
+                className={`vp ${p.id === presetId ? 'active' : ''}`}
+                onClick={() => onPreset(p.id)}
+                title={p.hint}
+              >
+                <span className="vp-icon">{p.icon}</span>
+                <span className="vp-name">{p.name}</span>
+              </button>
+
+              {/* Правити можна лише свої: вбудовані живуть у коді. */}
+              {userVoiceIds.includes(p.id) && (
+                <button
+                  className="edit-voice"
+                  onClick={() => onEdit(p.id)}
+                  title="Змінити голос"
+                  aria-label="Змінити голос"
+                >
+                  ✎
+                </button>
+              )}
+            </div>
           ))}
+
+          <button className="vp add" onClick={onCreate} title="Створити свій голос">
+            <span className="vp-icon">＋</span>
+            <span className="vp-name">Свій</span>
+          </button>
         </div>
       </div>
 

@@ -29,6 +29,22 @@ export interface UserMask {
   overlays: UserOverlay[]
 }
 
+export interface UserVoice {
+  id: string
+  name: string
+  icon: string
+  params: {
+    semitones: number
+    ringHz: number
+    ringMix: number
+    echoMs: number
+    echoFeedback: number
+    echoMix: number
+    wet: number
+    outputGain: number
+  }
+}
+
 export interface UpdateState {
   phase:
     | 'idle'
@@ -73,6 +89,15 @@ const api = {
     pickImage: (): Promise<string | null> => ipcRenderer.invoke('masks:pickImage'),
     exportMask: (id: string): Promise<string | null> => ipcRenderer.invoke('masks:export', id),
     importMask: (): Promise<UserMask[] | null> => ipcRenderer.invoke('masks:import')
+  },
+
+  /** Власні пресети голосу: створення, обмін файлами .memevoice. */
+  voices: {
+    list: (): Promise<UserVoice[]> => ipcRenderer.invoke('voices:list'),
+    save: (voice: UserVoice): Promise<UserVoice[]> => ipcRenderer.invoke('voices:save', voice),
+    remove: (id: string): Promise<UserVoice[]> => ipcRenderer.invoke('voices:delete', id),
+    exportVoice: (id: string): Promise<string | null> => ipcRenderer.invoke('voices:export', id),
+    importVoice: (): Promise<UserVoice[] | null> => ipcRenderer.invoke('voices:import')
   },
 
   /** Налаштування між запусками. Файл шифрується ключем операційної системи. */

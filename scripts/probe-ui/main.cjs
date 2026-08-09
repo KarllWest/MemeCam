@@ -65,6 +65,14 @@ app.whenReady().then(async () => {
     await wait(500)
     await shoot(win, 'ui-editor.png')
 
+    // Редактор власного голосу.
+    await win.webContents.executeJavaScript(`
+      document.querySelector('[aria-label="Закрити"]')?.click();
+      document.querySelector('[title="Створити свій голос"]')?.click();
+    `)
+    await wait(500)
+    await shoot(win, 'ui-voice.png')
+
     console.log('✓ Знімки готові')
     app.exit(0)
   } catch (e) {
