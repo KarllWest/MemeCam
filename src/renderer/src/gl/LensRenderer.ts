@@ -11,7 +11,8 @@ import {
   COMPOSITE_FS,
   BLIT_FS,
   NV12_FS,
-  VIDEO_COPY_FS
+  VIDEO_COPY_FS,
+  DENOISE_FS
 } from './shaders'
 
 /** Поза обличчя в екранних uv (0..1, початок унизу зліва). */
@@ -62,6 +63,8 @@ export interface LensParams {
   /** Ручна підгонка посадки накладок, спільна для всіх шарів маски */
   overlayScale: number
   overlayOffsetY: number
+  /** Шумозаглушення 0..1. У темряві сенсор шумить, і це єдине, що з цим робить лад. */
+  denoise: number
   /** Фон: 0 — як є, 1 — розмити, 2 — залити кольором */
   bgMode: 0 | 1 | 2
   bgColor: [number, number, number]
@@ -106,6 +109,7 @@ export const DEFAULT_PARAMS: LensParams = {
   boltColor: [0.72, 0.86, 1.0],
   overlayScale: 1,
   overlayOffsetY: 0,
+  denoise: 0.65,
   bgMode: 0,
   bgColor: [0.05, 0.5, 0.15],
   bgBlur: 3,
@@ -133,6 +137,7 @@ export class LensRenderer {
   private readonly blitProg: Program
   private readonly nv12Prog: Program
   private readonly videoCopyProg: Program
+  private readonly denoiseProg: Program
   private readonly overlays: OverlayRenderer
 
   /** Маска «людина / фон» з моделі сегментації. */
@@ -141,6 +146,12 @@ export class LensRenderer {
   /** Розмитий кадр — саме він стає фоном у режимі розмиття. */
   private readonly bgA: RenderTarget
   private readonly bgB: RenderTarget
+  /** Пара для шумозаглушення: з одного читаємо минулий кадр, у другий пишемо новий. */
+  private readonly denoiseA: RenderTarget
+  private readonly denoiseB: RenderTarget
+  private denoiseFlip = false
+  /** Чи вже є в історії справжній кадр, а не порожнеча. */
+  private denoisePrimed = false
 
   private readonly sceneRT: RenderTarget
   private readonly brightRT: RenderTarget
@@ -207,6 +218,7 @@ export class LensRenderer {
     this.blitProg = new Program(gl, QUAD_VS, BLIT_FS)
     this.nv12Prog = new Program(gl, QUAD_VS, NV12_FS)
     this.videoCopyProg = new Program(gl, QUAD_VS, VIDEO_COPY_FS)
+    this.denoiseProg = new Program(gl, QUAD_VS, DENOISE_FS)
     this.overlays = new OverlayRenderer(gl)
 
     const mask = gl.createTexture()
@@ -229,6 +241,8 @@ export class LensRenderer {
     // Фон розмиваємо на чверті роздільності: його однаково не видно різким.
     this.bgA = new RenderTarget(gl, false)
     this.bgB = new RenderTarget(gl, false)
+    this.denoiseA = new RenderTarget(gl, false)
+    this.denoiseB = new RenderTarget(gl, false)
   }
 
   /**
@@ -270,6 +284,11 @@ export class LensRenderer {
     // Фон розмитий, тож чверті роздільності вистачає з запасом.
     this.bgA.resize(Math.max(1, w >> 2), Math.max(1, h >> 2))
     this.bgB.resize(Math.max(1, w >> 2), Math.max(1, h >> 2))
+
+    // Шумозаглушення працює в повній роздільності: зменшення саме з’їдало б деталь.
+    if (this.denoiseA.width !== w || this.denoiseA.height !== h) this.denoisePrimed = false
+    this.denoiseA.resize(w, h)
+    this.denoiseB.resize(w, h)
   }
 
   private draw(): void {
@@ -339,12 +358,36 @@ export class LensRenderer {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
 
-    // --- 2. Розмитий фон, якщо він потрібен ---
+    // --- 2. Шумозаглушення ---
+    // Робимо найпершим: усе далі має працювати вже з чистим кадром, інакше
+    // контраст і сяйво підсилять зерно замість того, щоб його не помічати.
+    let source = this.videoTex
+    if (p.denoise > 0.001) {
+      const write = this.denoiseFlip ? this.denoiseA : this.denoiseB
+      const read = this.denoiseFlip ? this.denoiseB : this.denoiseA
+
+      write.bind()
+      this.denoiseProg
+        .use()
+        .tex('uVideo', 0, this.videoTex)
+        .tex('uHistory', 1, read.texture)
+        .v2('uTexel', 1 / this.canvas.width, 1 / this.canvas.height)
+        // Перший кадр після запуску чи зміни розміру пише історію собою:
+        // порожня історія чорна, і темні тони підмішали б її як «рух».
+        .f('uStrength', this.denoisePrimed ? Math.min(p.denoise, 0.95) : 0)
+      this.draw()
+      this.denoisePrimed = true
+
+      source = write.texture
+      this.denoiseFlip = !this.denoiseFlip
+    }
+
+    // --- 3. Розмитий фон, якщо він потрібен ---
     // Робимо до сцени, бо сцена вже підмішує його за маскою.
     const bgActive = p.bgMode !== 0 && this.maskReady
     if (bgActive && p.bgMode === 1) {
       this.bgA.bind()
-      this.videoCopyProg.use().tex('uVideo', 0, this.videoTex)
+      this.videoCopyProg.use().tex('uVideo', 0, source)
       this.draw()
       this.blurPass(this.bgA, this.bgB, 'x', p.bgBlur)
       this.blurPass(this.bgB, this.bgA, 'y', p.bgBlur)
@@ -370,7 +413,7 @@ export class LensRenderer {
       }
     }
 
-    // --- 3. Сцена: відео, спотворення, підміна фону, грейд ---
+    // --- 4. Сцена: відео, спотворення, підміна фону, грейд ---
     this.sceneRT.bind()
     this.sceneProg
       .use()
@@ -379,7 +422,7 @@ export class LensRenderer {
       .v2v('uWarpCenter', this.warpCenters)
       .fv('uWarpRadius', this.warpRadii)
       .fv('uWarpStrength', this.warpStrengths)
-      .tex('uVideo', 0, this.videoTex)
+      .tex('uVideo', 0, source)
       .tex('uBlurred', 1, this.bgA.texture)
       .tex('uMask', 2, this.maskTex)
       .f('uMirror', p.mirror ? 1 : 0)
@@ -392,7 +435,7 @@ export class LensRenderer {
       .f('uMaskSoftness', 1.6 / Math.max(1, this.bgA.width))
     this.draw()
 
-    // --- 4. Атмосфера: дим унизу, блискавки згори ---
+    // --- 5. Атмосфера: дим унизу, блискавки згори ---
     // Преммультиплікована альфа: дим змішується як шар, блискавка лягає адитивно.
     if (p.smokeAmount > 0.001 || p.boltCount > 0) {
       gl.enable(gl.BLEND)
@@ -419,7 +462,7 @@ export class LensRenderer {
 
     const s = this.smoothed
 
-    // --- 5. Накладки маски ---
+    // --- 6. Накладки маски ---
     // До променів: лазер має бити крізь окуляри, а не ховатись за ними.
     if (s && overlayLayers.length > 0) {
       this.overlays.draw(
@@ -433,7 +476,7 @@ export class LensRenderer {
       gl.bindVertexArray(this.quad)
     }
 
-    // --- 6. Промені, адитивно поверх усього ---
+    // --- 7. Промені, адитивно поверх усього ---
     if (s && this.active > 0.001) {
       gl.enable(gl.BLEND)
       gl.blendFunc(gl.ONE, gl.ONE)
@@ -459,7 +502,7 @@ export class LensRenderer {
       gl.disable(gl.BLEND)
     }
 
-    // --- 7. Bright pass ---
+    // --- 8. Bright pass ---
     this.brightRT.bind()
     this.brightProg
       .use()
@@ -468,13 +511,13 @@ export class LensRenderer {
       .f('uKnee', 0.35)
     this.draw()
 
-    // --- 8. Два ланцюги розмиття: тісний ореол і широке сяйво ---
+    // --- 9. Два ланцюги розмиття: тісний ореол і широке сяйво ---
     this.blurPass(this.brightRT, this.nearA, 'x', 1.0)
     this.blurPass(this.nearA, this.nearB, 'y', 1.0)
     this.blurPass(this.nearB, this.farA, 'x', 1.6)
     this.blurPass(this.farA, this.farB, 'y', 1.6)
 
-    // --- 9. Композит у текстуру готового кадру ---
+    // --- 10. Композит у текстуру готового кадру ---
     this.outRT.bind()
     this.compositeProg
       .use()
@@ -485,7 +528,7 @@ export class LensRenderer {
       .f('uVignette', p.vignette)
     this.draw()
 
-    // --- 10. Той самий кадр на екран ---
+    // --- 11. Той самий кадр на екран ---
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
     gl.viewport(0, 0, this.canvas.width, this.canvas.height)
     this.blitProg.use().tex('uTex', 0, this.outRT.texture)
@@ -599,6 +642,9 @@ export class LensRenderer {
     this.blitProg.dispose()
     this.nv12Prog.dispose()
     this.videoCopyProg.dispose()
+    this.denoiseProg.dispose()
+    this.denoiseA.dispose()
+    this.denoiseB.dispose()
     this.bgA.dispose()
     this.bgB.dispose()
     gl.deleteTexture(this.maskTex)

@@ -62,4 +62,16 @@ const warpCode = await new Promise((res) => {
   child.on('exit', (c) => res(c ?? 1))
 })
 
-process.exit(warpCode)
+if (warpCode !== 0) process.exit(warpCode)
+
+// Четверта проба: шумозаглушення.
+const denoiseCode = await new Promise((res) => {
+  const child = spawn(electronExe, [join(root, 'scripts/probe-color/denoise-main.cjs')], {
+    stdio: 'inherit',
+    env
+  })
+  child.on('error', () => res(1))
+  child.on('exit', (c) => res(c ?? 1))
+})
+
+process.exit(denoiseCode)

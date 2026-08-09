@@ -109,6 +109,53 @@ void main() {
   fragColor = vec4(max(c, 0.0), 1.0);
 }`
 
+/**
+ * Тимчасове шумозаглушення: підмішує попередній кадр до поточного.
+ *
+ * Шум сенсора випадковий, тож у сусідніх кадрах він різний і при усередненні
+ * гасне. Корисний сигнал між кадрами майже не змінюється, тому лишається цілим.
+ *
+ * Ключове — не підмішувати там, де картинка справді змінилась: інакше за рухом
+ * тягнеться шлейф. Тому вага падає до нуля, щойно різниця стає помітною.
+ */
+export const DENOISE_FS = /* glsl */ `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 fragColor;
+
+uniform sampler2D uVideo;
+uniform sampler2D uHistory;
+uniform vec2 uTexel;       // розмір пікселя в uv
+uniform float uStrength;   // 0 — вимкнено, 1 — максимум усереднення
+
+/**
+ * Середнє по околиці 3x3.
+ *
+ * Рух не можна міряти по одному пікселю: шум і є різниця між сусідніми кадрами,
+ * тож фільтр прийняв би зерно за рух і не гасив би нічого. Усереднення дев'яти
+ * відліків збиває шум утричі, а справжній рух лишає помітним.
+ */
+vec3 neighbourhood(sampler2D tex, vec2 uv) {
+  vec3 sum = vec3(0.0);
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
+      sum += texture(tex, uv + vec2(float(x), float(y)) * uTexel).rgb;
+    }
+  }
+  return sum / 9.0;
+}
+
+void main() {
+  vec3 current = texture(uVideo, vUv).rgb;
+  vec3 previous = texture(uHistory, vUv).rgb;
+
+  float change = length(neighbourhood(uVideo, vUv) - neighbourhood(uHistory, vUv));
+  // Смуга розділення: нижче — шум, вище — справжній рух.
+  float blend = uStrength * (1.0 - smoothstep(0.14, 0.34, change));
+
+  fragColor = vec4(mix(current, previous, blend), 1.0);
+}`
+
 /** Кадр з камери без обробки — потрібен, щоб зробити з нього розмитий фон. */
 export const VIDEO_COPY_FS = /* glsl */ `#version 300 es
 precision highp float;

@@ -185,6 +185,14 @@ export function SettingsPanel({
           onChange={(v) => set('boltFlash', v)} />
 
         <h3>Картинка</h3>
+        <Slider label="Шумозаглушення" value={params.denoise} min={0} max={0.95} step={0.01}
+          onChange={(v) => set('denoise', v)} />
+        <p className="panel-note">
+          У темряві сенсор задирає підсилення й картинка починає рябіти. Фільтр
+          усереднює сусідні кадри там, де нічого не рухається. Якщо за рухом
+          з’являється шлейф — зменш.
+        </p>
+
         <Slider label="Яскравість сцени" value={params.exposure} min={0.1} max={1.5} step={0.01}
           onChange={(v) => set('exposure', v)} />
         <Slider label="Контраст" value={params.contrast} min={0.5} max={2} step={0.01}
