@@ -26,6 +26,14 @@ contextBridge.exposeInMainWorld('memecam', {
     list: async () => [],
     onPress: () => () => {}
   },
+  masks: {
+    list: async () => [],
+    save: async () => [],
+    remove: async () => [],
+    pickImage: async () => null,
+    exportMask: async () => null,
+    importMask: async () => null
+  },
   settings: {
     load: async () => ({ favorites: ['deal', 'dog'] }),
     save: async () => {}
@@ -42,3 +50,5 @@ contextBridge.exposeInMainWorld('memecam', {
     status: async () => null
   }
 })
+
+// Заглушка власних масок для знімка інтерфейсу.

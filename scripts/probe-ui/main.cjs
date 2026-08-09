@@ -57,6 +57,14 @@ app.whenReady().then(async () => {
     await wait(500)
     await shoot(win, 'ui-updates.png')
 
+    // Редактор власної маски.
+    await win.webContents.executeJavaScript(`
+      document.querySelector('[aria-label="Закрити"]')?.click();
+      document.querySelector('[title="Створити свою маску"]')?.click();
+    `)
+    await wait(500)
+    await shoot(win, 'ui-editor.png')
+
     console.log('✓ Знімки готові')
     app.exit(0)
   } catch (e) {

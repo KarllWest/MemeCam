@@ -1,26 +1,35 @@
 import { useEffect, useRef, type JSX } from 'react'
-import { MASKS } from '../masks/registry'
+import type { Mask } from '../masks/types'
 
 interface Props {
+  masks: Mask[]
+  /** Які з масок створив користувач — лише їх можна правити. */
+  userMaskIds: string[]
   selected: string
   favorites: string[]
   onSelect: (id: string) => void
   onToggleFavorite: (id: string) => void
+  onEdit: (id: string) => void
+  onCreate: () => void
 }
 
 /** Стрічка масок, що лежить поверх нижнього краю кадру — як у камерах телефонів. */
 export function MaskCarousel({
+  masks,
+  userMaskIds,
   selected,
   favorites,
   onSelect,
-  onToggleFavorite
+  onToggleFavorite,
+  onEdit,
+  onCreate
 }: Props): JSX.Element {
   const stripRef = useRef<HTMLDivElement>(null)
 
   // Улюблені попереду: інакше потрібну маску доводиться щоразу шукати гортанням.
   const ordered = [
-    ...MASKS.filter((m) => favorites.includes(m.id)),
-    ...MASKS.filter((m) => !favorites.includes(m.id))
+    ...masks.filter((m) => favorites.includes(m.id)),
+    ...masks.filter((m) => !favorites.includes(m.id))
   ]
 
   // Коли маску перемикають стрілками, вона може бути за межами видимої частини.
@@ -55,9 +64,26 @@ export function MaskCarousel({
             >
               {fav ? '★' : '☆'}
             </button>
+
+            {/* Правити можна лише свої: вбудовані живуть у коді. */}
+            {userMaskIds.includes(m.id) && (
+              <button
+                className="edit-mask"
+                onClick={() => onEdit(m.id)}
+                title="Змінити маску"
+                aria-label="Змінити маску"
+              >
+                ✎
+              </button>
+            )}
           </div>
         )
       })}
+
+      <button className="mask add" onClick={onCreate} title="Створити свою маску">
+        <span className="mask-icon">＋</span>
+        <span className="mask-name">Своя</span>
+      </button>
     </div>
   )
 }

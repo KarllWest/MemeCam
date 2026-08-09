@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'rea
 import type { LensParams } from './gl/LensRenderer'
 import { MASKS, findMask, paramsForMask } from './masks/registry'
 import { isOverlay, isWarp } from './masks/types'
+import { toMask, type UserMask } from './masks/userMasks'
+import { MaskEditor } from './ui/MaskEditor'
 import { useMemeCam, VCAM_FPS, type CameraTarget } from './useMemeCam'
 import { useVoice } from './useVoice'
 import { useRecorder } from './useRecorder'
@@ -19,7 +21,20 @@ export default function App(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const [maskId, setMaskId] = useState('laser')
-  const mask = useMemo(() => findMask(maskId), [maskId])
+  const [userMasks, setUserMasks] = useState<UserMask[]>([])
+  /** Маска в редакторі: показуємо її на камері, не зберігаючи. */
+  const [previewMask, setPreviewMask] = useState<UserMask | null>(null)
+  const [editing, setEditing] = useState<UserMask | null>(null)
+  const [showEditor, setShowEditor] = useState(false)
+
+  // Власні маски стають у той самий список, що й вбудовані.
+  const allMasks = useMemo(() => [...MASKS, ...userMasks.map(toMask)], [userMasks])
+
+  const mask = useMemo(() => {
+    if (previewMask) return toMask(previewMask)
+    return allMasks.find((m) => m.id === maskId) ?? allMasks[0]
+  }, [allMasks, maskId, previewMask])
+
   const overlayLayers = useMemo(() => mask.layers.filter(isOverlay), [mask])
   const warpLayers = useMemo(() => mask.layers.filter(isWarp), [mask])
 
@@ -69,10 +84,15 @@ export default function App(): JSX.Element {
   const running = status === 'running'
   const needsDriver = target === 'memecam' && filter !== null && !filter.current
 
-  const selectMask = useCallback((id: string) => {
-    setMaskId(id)
-    setParams(paramsForMask(findMask(id)))
-  }, [])
+  const selectMask = useCallback(
+    (id: string) => {
+      setMaskId(id)
+      // Власні маски — це лише накладки, тож їм дістаються нейтральні параметри.
+      const found = allMasks.find((m) => m.id === id)
+      setParams(found ? paramsForMask(found) : paramsForMask(findMask(id)))
+    },
+    [allMasks]
+  )
 
   const refreshDevices = useCallback(async () => {
     const all = await navigator.mediaDevices.enumerateDevices()
@@ -97,9 +117,28 @@ export default function App(): JSX.Element {
   useEffect(() => {
     void refreshDevices()
     void refreshFilter()
+    void window.memecam.masks.list().then(setUserMasks)
     void window.memecam.updates.state().then(setUpdate)
     return window.memecam.updates.onChange(setUpdate)
   }, [refreshDevices, refreshFilter])
+
+  const importMask = async (): Promise<void> => {
+    setNotice(null)
+    try {
+      const masks = await window.memecam.masks.importMask()
+      if (masks) {
+        setUserMasks(masks)
+        setNotice({ text: 'Маску додано', tone: 'info' })
+      }
+    } catch (e) {
+      setNotice({ text: e instanceof Error ? e.message : String(e), tone: 'err' })
+    }
+  }
+
+  const deleteMask = async (id: string): Promise<void> => {
+    setUserMasks(await window.memecam.masks.remove(id))
+    if (maskId === id) selectMask(MASKS[0].id)
+  }
 
   // Відновлюємо вибір з минулого запуску. Робиться один раз, до першої взаємодії.
   useEffect(() => {
@@ -328,9 +367,19 @@ export default function App(): JSX.Element {
             )}
 
             <MaskCarousel
+              masks={allMasks}
+              userMaskIds={userMasks.map((m) => m.id)}
               selected={maskId}
               favorites={favorites}
               onSelect={selectMask}
+              onEdit={(id) => {
+                setEditing(userMasks.find((m) => m.id === id) ?? null)
+                setShowEditor(true)
+              }}
+              onCreate={() => {
+                setEditing(null)
+                setShowEditor(true)
+              }}
               onToggleFavorite={(id) =>
                 setFavorites((prev) =>
                   prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
@@ -468,6 +517,32 @@ export default function App(): JSX.Element {
             onReset={() => selectMask(maskId)}
             onClose={() => setShowSettings(false)}
           >
+            <h3>Свої маски</h3>
+            <div className="panel-row">
+              <button className="btn sm" onClick={() => void importMask()}>
+                Імпортувати файл
+              </button>
+              {userMasks.some((m) => m.id === maskId) && (
+                <button
+                  className="btn sm"
+                  onClick={() => void window.memecam.masks.exportMask(maskId)}
+                >
+                  Поділитись
+                </button>
+              )}
+            </div>
+
+            {userMasks.some((m) => m.id === maskId) && (
+              <button className="btn sm ghost" onClick={() => void deleteMask(maskId)}>
+                Видалити цю маску
+              </button>
+            )}
+
+            <p className="panel-note">
+              Маска зберігається одним файлом .memecam разом із картинками — його можна
+              просто надіслати.
+            </p>
+
             <DevicesSection
               cameras={devices}
               mics={audioIn}
@@ -489,6 +564,18 @@ export default function App(): JSX.Element {
           </SettingsPanel>
         )}
       </div>
+
+      {showEditor && (
+        <MaskEditor
+          editing={editing}
+          onPreview={setPreviewMask}
+          onSaved={(masks) => setUserMasks(masks)}
+          onClose={() => {
+            setShowEditor(false)
+            setEditing(null)
+          }}
+        />
+      )}
 
       {showUpdates && <UpdatesDialog onClose={() => setShowUpdates(false)} />}
     </div>

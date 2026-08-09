@@ -1,6 +1,16 @@
 import { app, shell, BrowserWindow, ipcMain, session, dialog, protocol, net } from 'electron'
 import { join, normalize, sep } from 'node:path'
 import { loadSettings, saveSettings } from './settings'
+import {
+  registerUserMaskProtocol,
+  loadUserMasks,
+  saveUserMask,
+  deleteUserMask,
+  pickImage,
+  exportUserMask,
+  importUserMask,
+  pruneUnusedImages
+} from './userMasks'
 import { pathToFileURL } from 'node:url'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { VirtualCamera, type CameraTarget } from './virtualCamera'
@@ -62,6 +72,11 @@ protocol.registerSchemesAsPrivileged([
   {
     scheme: 'app',
     privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
+  },
+  // Картинки власних масок: лежать у теці даних, а не всередині застосунку.
+  {
+    scheme: 'usermask',
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
   }
 ])
 
@@ -89,7 +104,8 @@ function applyContentSecurityPolicy(): void {
         "default-src 'self'",
         "script-src 'self' 'wasm-unsafe-eval'",
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob:",
+        // usermask: — картинки власних масок; вони поза межами застосунку.
+        "img-src 'self' data: blob: usermask:",
         "media-src 'self' blob: mediastream:",
         "connect-src 'self' data: blob:"
       ].join('; ')
@@ -172,7 +188,9 @@ app.whenReady().then(() => {
   session.defaultSession.setPermissionCheckHandler((_wc, permission) => allowed.has(permission))
 
   registerAppProtocol()
+  registerUserMaskProtocol()
   applyContentSecurityPolicy()
+  void pruneUnusedImages()
 
   ipcMain.handle('capture:save', async (_e, data: Uint8Array, filename: string) =>
     writeCapture(captureDir(), data, filename)
@@ -245,6 +263,15 @@ app.whenReady().then(() => {
 
   ipcMain.handle('settings:load', () => loadSettings())
   ipcMain.handle('settings:save', (_e, data: unknown) => saveSettings(data))
+
+  // --- Власні маски ---
+
+  ipcMain.handle('masks:list', () => loadUserMasks())
+  ipcMain.handle('masks:save', (_e, mask: unknown) => saveUserMask(mask))
+  ipcMain.handle('masks:delete', (_e, id: unknown) => deleteUserMask(id))
+  ipcMain.handle('masks:pickImage', () => pickImage())
+  ipcMain.handle('masks:export', (_e, id: unknown) => exportUserMask(id))
+  ipcMain.handle('masks:import', () => importUserMask())
 
   // --- Гарячі клавіші ---
 

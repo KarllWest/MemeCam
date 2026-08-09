@@ -10,6 +10,25 @@ export type HotkeyAction =
   | { type: 'capture' }
   | { type: 'record-toggle' }
 
+export type AnchorPreset = 'eyes' | 'head' | 'nose' | 'mouth' | 'face'
+
+export interface UserOverlay {
+  texture: string
+  anchor: AnchorPreset
+  scale: number
+  offsetX: number
+  offsetY: number
+  rotate: boolean
+  opacity: number
+}
+
+export interface UserMask {
+  id: string
+  name: string
+  icon: string
+  overlays: UserOverlay[]
+}
+
 export interface UpdateState {
   phase:
     | 'idle'
@@ -44,6 +63,17 @@ const api = {
   /** Системне вікно з помилкою. */
   showError: (title: string, message: string): Promise<void> =>
     ipcRenderer.invoke('app:error', title, message),
+
+  /** Власні маски: імпорт картинок, редагування, обмін файлами .memecam. */
+  masks: {
+    list: (): Promise<UserMask[]> => ipcRenderer.invoke('masks:list'),
+    save: (mask: UserMask): Promise<UserMask[]> => ipcRenderer.invoke('masks:save', mask),
+    remove: (id: string): Promise<UserMask[]> => ipcRenderer.invoke('masks:delete', id),
+    /** Відкриває вибір файлу, повертає ім'я вже скопійованої картинки. */
+    pickImage: (): Promise<string | null> => ipcRenderer.invoke('masks:pickImage'),
+    exportMask: (id: string): Promise<string | null> => ipcRenderer.invoke('masks:export', id),
+    importMask: (): Promise<UserMask[] | null> => ipcRenderer.invoke('masks:import')
+  },
 
   /** Налаштування між запусками. Файл шифрується ключем операційної системи. */
   settings: {

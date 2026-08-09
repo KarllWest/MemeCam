@@ -73,7 +73,9 @@ export class OverlayRenderer {
       this.loading.delete(url)
     }
     img.onerror = () => this.loading.delete(url)
-    img.src = `masks/${url}`
+    // Власні маски приходять повним посиланням (usermask://), вбудовані —
+    // просто іменем файлу в теці застосунку.
+    img.src = url.includes('://') ? url : `masks/${url}`
 
     return null
   }
