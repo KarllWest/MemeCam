@@ -8,6 +8,7 @@ export type HotkeyAction =
   | { type: 'voice-toggle' }
   | { type: 'broadcast-toggle' }
   | { type: 'capture' }
+  | { type: 'record-toggle' }
 
 export interface UpdateState {
   phase:
@@ -31,6 +32,10 @@ const api = {
   /** Зберігає байти знімка в Зображення/MemeCam, повертає повний шлях. */
   savePhoto: (bytes: Uint8Array, filename: string): Promise<string> =>
     ipcRenderer.invoke('capture:save', bytes, filename),
+
+  /** Зберігає записане відео в Відео/MemeCam, повертає повний шлях. */
+  saveVideo: (bytes: Uint8Array, filename: string): Promise<string> =>
+    ipcRenderer.invoke('capture:saveVideo', bytes, filename),
 
   /** Показує файл у Провіднику. */
   revealInFolder: (fullPath: string): Promise<void> =>

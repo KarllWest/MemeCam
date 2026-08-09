@@ -10,11 +10,18 @@ import type { VoiceParams } from './presets'
  */
 export class AudioEngine {
   private ctx: AudioContext | null = null
-  private stream: MediaStream | null = null
+  private micStream: MediaStream | null = null
   private source: MediaStreamAudioSourceNode | null = null
   private node: AudioWorkletNode | null = null
   private analyser: AnalyserNode | null = null
   private levelBuffer: Float32Array<ArrayBuffer> | null = null
+  /** Той самий оброблений голос, але як потік — його забирає запис відео. */
+  private tap: MediaStreamAudioDestinationNode | null = null
+
+  /** Потік з обробленим голосом або null, якщо мікрофон вимкнено. */
+  get stream(): MediaStream | null {
+    return this.tap?.stream ?? null
+  }
 
   get running(): boolean {
     return this.ctx !== null
@@ -27,7 +34,7 @@ export class AudioEngine {
   async start(inputDeviceId: string, outputDeviceId: string, params: VoiceParams): Promise<void> {
     await this.stop()
 
-    this.stream = await navigator.mediaDevices.getUserMedia({
+    this.micStream = await navigator.mediaDevices.getUserMedia({
       audio: {
         deviceId: inputDeviceId ? { exact: inputDeviceId } : undefined,
         // Обробка браузера тут тільки заважає: вона «вирівнює» голос,
@@ -54,7 +61,7 @@ export class AudioEngine {
         })
     }
 
-    this.source = ctx.createMediaStreamSource(this.stream)
+    this.source = ctx.createMediaStreamSource(this.micStream)
     this.node = new AudioWorkletNode(ctx, 'memecam-voice', {
       numberOfInputs: 1,
       numberOfOutputs: 1,
@@ -66,9 +73,14 @@ export class AudioEngine {
     this.analyser.fftSize = 1024
     this.levelBuffer = new Float32Array(this.analyser.fftSize)
 
+    // Відгалуження для запису йде паралельно з динаміками: якщо його чіпляти
+    // послідовно, зупинка запису обірвала б і звук у навушниках.
+    this.tap = ctx.createMediaStreamDestination()
+
     this.source.connect(this.node)
     this.node.connect(this.analyser)
     this.analyser.connect(ctx.destination)
+    this.analyser.connect(this.tap)
 
     if (ctx.state === 'suspended') await ctx.resume()
   }
@@ -108,13 +120,16 @@ export class AudioEngine {
     this.node?.disconnect()
     this.analyser?.disconnect()
     this.source?.disconnect()
-    this.stream?.getTracks().forEach((t) => t.stop())
+    this.micStream?.getTracks().forEach((t) => t.stop())
     await this.ctx?.close().catch(() => {})
+
+    this.tap?.disconnect()
 
     this.node = null
     this.analyser = null
+    this.tap = null
     this.source = null
-    this.stream = null
+    this.micStream = null
     this.ctx = null
     this.levelBuffer = null
   }

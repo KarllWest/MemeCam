@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { LensRenderer, type LensParams } from './gl/LensRenderer'
 import { FaceTracker, type TrackedFace } from './face/FaceTracker'
 import { Segmenter } from './face/Segmenter'
-import type { OverlayLayer } from './masks/types'
+import type { OverlayLayer, WarpLayer } from './masks/types'
 
 export type CamStatus = 'idle' | 'loading' | 'running' | 'error'
 
@@ -56,6 +56,7 @@ export function useMemeCam(
   canvasRef: RefObject<HTMLCanvasElement | null>,
   params: LensParams,
   overlayLayers: OverlayLayer[],
+  warpLayers: WarpLayer[],
   /**
    * Частота зйомки. На 60 кадрах камера вдвічі коротше набирає світло, тож
    * у слабо освітленій кімнаті 30 дають помітно яскравішу картинку.
@@ -72,6 +73,8 @@ export function useMemeCam(
   paramsRef.current = params
   const overlaysRef = useRef(overlayLayers)
   overlaysRef.current = overlayLayers
+  const warpsRef = useRef(warpLayers)
+  warpsRef.current = warpLayers
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -225,7 +228,7 @@ export function useMemeCam(
             if (mask) r.setMask(mask, seg.width, seg.height)
           }
 
-          r.render(v, lastPose, p, overlaysRef.current)
+          r.render(v, lastPose, p, overlaysRef.current, warpsRef.current)
 
           if (captureRef.current) {
             captureRef.current = false

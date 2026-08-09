@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import type { LensParams } from './gl/LensRenderer'
 import { MASKS, findMask, paramsForMask } from './masks/registry'
-import { isOverlay } from './masks/types'
+import { isOverlay, isWarp } from './masks/types'
 import { useMemeCam, VCAM_FPS, type CameraTarget } from './useMemeCam'
 import { useVoice } from './useVoice'
+import { useRecorder } from './useRecorder'
 import { findVoicePreset } from './audio/presets'
 import { MaskCarousel } from './ui/MaskCarousel'
 import { VoiceBar } from './ui/VoiceBar'
@@ -20,6 +21,7 @@ export default function App(): JSX.Element {
   const [maskId, setMaskId] = useState('laser')
   const mask = useMemo(() => findMask(maskId), [maskId])
   const overlayLayers = useMemo(() => mask.layers.filter(isOverlay), [mask])
+  const warpLayers = useMemo(() => mask.layers.filter(isWarp), [mask])
 
   const [params, setParams] = useState<LensParams>(() => paramsForMask(findMask('laser')))
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
@@ -51,9 +53,18 @@ export default function App(): JSX.Element {
     vcamOn,
     startVirtualCamera,
     stopVirtualCamera
-  } = useMemeCam(canvasRef, params, overlayLayers, captureFps)
+  } = useMemeCam(canvasRef, params, overlayLayers, warpLayers, captureFps)
 
   const voice = useVoice()
+  const recorder = useRecorder()
+
+  const toggleRecording = useCallback(() => {
+    if (recorder.recording) {
+      recorder.stop()
+    } else if (canvasRef.current) {
+      recorder.start(canvasRef.current, captureFps, voice.stream)
+    }
+  }, [recorder, captureFps, voice.stream])
 
   const running = status === 'running'
   const needsDriver = target === 'memecam' && filter !== null && !filter.current
@@ -215,6 +226,9 @@ export default function App(): JSX.Element {
         case 'capture':
           if (running) capture()
           break
+        case 'record-toggle':
+          if (running) toggleRecording()
+          break
         case 'voice-toggle':
           void toggleVoice()
           break
@@ -246,6 +260,11 @@ export default function App(): JSX.Element {
               {vcamOn && (
                 <span className="pill live">
                   <span className="dot" /> у Discord · {stats.packMs.toFixed(1)} мс
+                </span>
+              )}
+              {recorder.recording && (
+                <span className="pill live">
+                  <span className="dot" /> запис {recorder.seconds.toFixed(0)} с
                 </span>
               )}
             </>
@@ -339,15 +358,27 @@ export default function App(): JSX.Element {
               </button>
             </div>
 
-            <button
-              className="shutter"
-              onClick={capture}
-              disabled={!running}
-              title="Зняти фото (Пробіл)"
-              aria-label="Зняти фото"
-            >
-              <span />
-            </button>
+            <div className="ab-center">
+              <button
+                className="shutter"
+                onClick={capture}
+                disabled={!running}
+                title="Зняти фото (Пробіл)"
+                aria-label="Зняти фото"
+              >
+                <span />
+              </button>
+
+              <button
+                className={`rec ${recorder.recording ? 'on' : ''}`}
+                onClick={toggleRecording}
+                disabled={!running}
+                title="Записати відео (Ctrl + Alt + R)"
+                aria-label="Записати відео"
+              >
+                <span />
+              </button>
+            </div>
 
             <div className="ab-side right">
               <button

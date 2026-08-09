@@ -37,9 +37,47 @@ uniform float uBgMode;        // 0 — без заміни, 1 — розмити
 uniform vec3  uBgColor;
 uniform float uMaskSoftness;  // згладжування краю маски в частках кадру
 
+uniform float uAspect;
+// Спотворення: до чотирьох осередків, кожен — центр, радіус і сила.
+// Додатна сила надуває, від'ємна втягує.
+uniform int   uWarpCount;
+uniform vec2  uWarpCenter[4];
+uniform float uWarpRadius[4];
+uniform float uWarpStrength[4];
+
+/**
+ * Локальне спотворення навколо точки — класична лінза.
+ *
+ * Зсуваємо не колір, а відстань точки вибірки від центру: нова відстань це
+ * r * (dist/r)^k. На межі осередку вираз дає рівно r, тому перехід до звичайної
+ * картинки безшовний сам собою, без окремого згасання.
+ *
+ * k > 1 стискає вибірку до центру — на екрані це збільшення. k < 1 навпаки.
+ */
+vec2 warp(vec2 uv) {
+  vec2 p = vec2(uv.x * uAspect, uv.y);
+
+  for (int i = 0; i < 4; i++) {
+    if (i >= uWarpCount) break;
+
+    vec2 center = vec2(uWarpCenter[i].x * uAspect, uWarpCenter[i].y);
+    vec2 d = p - center;
+    float dist = length(d);
+    float r = uWarpRadius[i];
+    if (dist >= r || dist < 1e-5) continue;
+
+    float k = 1.0 + uWarpStrength[i] * 2.0;
+    float scaled = r * pow(dist / r, max(k, 0.05));
+    p = center + d * (scaled / dist);
+  }
+
+  return vec2(p.x / uAspect, p.y);
+}
+
 void main() {
   vec2 uv = vUv;
   if (uMirror > 0.5) uv.x = 1.0 - uv.x;
+  if (uWarpCount > 0) uv = warp(uv);
 
   vec3 c = texture(uVideo, uv).rgb;
 

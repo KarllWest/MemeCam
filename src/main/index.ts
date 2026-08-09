@@ -40,6 +40,20 @@ function captureDir(): string {
   return join(app.getPath('pictures'), 'MemeCam')
 }
 
+/** Куди складаємо відео: Відео/MemeCam */
+function videoDir(): string {
+  return join(app.getPath('videos'), 'MemeCam')
+}
+
+/** Ім'я формує рендерер — лишаємо тільки базову частину, без шляхів. */
+async function writeCapture(dir: string, data: Uint8Array, filename: string): Promise<string> {
+  const safe = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+  await mkdir(dir, { recursive: true })
+  const full = join(dir, safe)
+  await writeFile(full, Buffer.from(data))
+  return full
+}
+
 /**
  * Рендерер віддаємо через власну схему, а не file://.
  * З file:// Chromium блокує fetch(), а MediaPipe саме ним тягне свій wasm і модель.
@@ -160,22 +174,21 @@ app.whenReady().then(() => {
   registerAppProtocol()
   applyContentSecurityPolicy()
 
-  ipcMain.handle('capture:save', async (_e, data: Uint8Array, filename: string) => {
-    // Ім'я формує рендерер — залишаємо тільки базову частину, без шляхів.
-    const safe = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const dir = captureDir()
-    await mkdir(dir, { recursive: true })
-    const full = join(dir, safe)
-    await writeFile(full, Buffer.from(data))
-    return full
-  })
+  ipcMain.handle('capture:save', async (_e, data: Uint8Array, filename: string) =>
+    writeCapture(captureDir(), data, filename)
+  )
+
+  ipcMain.handle('capture:saveVideo', async (_e, data: Uint8Array, filename: string) =>
+    writeCapture(videoDir(), data, filename)
+  )
 
   ipcMain.handle('capture:reveal', async (_e, fullPath: unknown) => {
     // Показуємо лише те, що самі ж і зберегли: інакше через міст можна було б
     // попросити відкрити провідник на будь-якому файлі системи.
     if (typeof fullPath !== 'string') return
-    const dir = captureDir()
-    if (!normalize(fullPath).startsWith(dir + sep)) return
+    const target = normalize(fullPath)
+    const allowed = [captureDir(), videoDir()]
+    if (!allowed.some((dir) => target.startsWith(dir + sep))) return
     shell.showItemInFolder(fullPath)
   })
 

@@ -558,6 +558,53 @@ select:disabled {
   background: rgba(255, 107, 125, 0.14);
 }
 
+.ab-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Запис: квадрат усередині кола, як на диктофонах. Червоний, бо це не фото. */
+.rec {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid var(--line-strong);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition: border-color 0.14s, box-shadow 0.18s;
+}
+
+.rec span {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ff5f70;
+  transition: border-radius 0.18s, width 0.18s, height 0.18s;
+}
+
+.rec:hover:not(:disabled) {
+  border-color: #ff5f70;
+}
+
+.rec.on {
+  border-color: #ff5f70;
+  box-shadow: 0 0 0 4px rgba(255, 95, 112, 0.16);
+}
+
+/* Під час запису кружок стає квадратом — звичний знак «зупинити». */
+.rec.on span {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+.rec:disabled {
+  opacity: 0.32;
+}
+
 /* Затвор: центр композиції, тому найпомітніший елемент панелі. */
 .shutter {
   width: 62px;

@@ -58,7 +58,23 @@ export interface LensLayer {
   params: Partial<LensParams>
 }
 
-export type MaskLayer = OverlayLayer | LensLayer
+/**
+ * Спотворення геометрії навколо точки обличчя.
+ *
+ * Зсувається координата вибірки, а не пікселі, тому картинка тягнеться цілою.
+ * Додатна сила надуває ділянку, від'ємна втягує.
+ */
+export interface WarpLayer {
+  kind: 'warp'
+  /** Індекси точок, навколо яких гнеться картинка. */
+  points: number[]
+  /** Радіус у частках кадру. */
+  radius: number
+  /** Розумні межі приблизно -0.5..0.5; далі починається каша. */
+  strength: number
+}
+
+export type MaskLayer = OverlayLayer | LensLayer | WarpLayer
 
 export interface Mask {
   id: string
@@ -70,3 +86,7 @@ export interface Mask {
 
 export const isOverlay = (l: MaskLayer): l is OverlayLayer => l.kind === 'overlay'
 export const isLens = (l: MaskLayer): l is LensLayer => l.kind === 'lens'
+export const isWarp = (l: MaskLayer): l is WarpLayer => l.kind === 'warp'
+
+/** Скільки осередків спотворення підтримує шейдер. */
+export const MAX_WARPS = 4

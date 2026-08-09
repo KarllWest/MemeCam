@@ -68,6 +68,22 @@ export class Program {
     return this
   }
 
+  i(name: string, v: number): this {
+    this.gl.uniform1i(this.loc(name), v)
+    return this
+  }
+
+  /** Масиви для юніформів-масивів: передаються одним викликом. */
+  fv(name: string, values: Float32Array | number[]): this {
+    this.gl.uniform1fv(this.loc(name), values)
+    return this
+  }
+
+  v2v(name: string, values: Float32Array | number[]): this {
+    this.gl.uniform2fv(this.loc(name), values)
+    return this
+  }
+
   /** Прив'язує текстуру до слота і передає його номер у юніформ. */
   tex(name: string, unit: number, texture: WebGLTexture): this {
     const gl = this.gl

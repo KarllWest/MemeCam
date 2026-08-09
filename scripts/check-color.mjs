@@ -51,3 +51,15 @@ const bgCode = await new Promise((res) => {
 })
 
 if (bgCode !== 0) process.exit(bgCode)
+
+// Третя проба: спотворення геометрії обличчя.
+const warpCode = await new Promise((res) => {
+  const child = spawn(electronExe, [join(root, 'scripts/probe-color/warp-main.cjs')], {
+    stdio: 'inherit',
+    env
+  })
+  child.on('error', () => res(1))
+  child.on('exit', (c) => res(c ?? 1))
+})
+
+process.exit(warpCode)

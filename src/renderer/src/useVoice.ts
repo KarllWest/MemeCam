@@ -77,5 +77,17 @@ export function useVoice() {
     return () => void engine.stop()
   }, [])
 
-  return { on, presetId, error, stats, params: paramsRef.current, start, stop, selectPreset, tune }
+  return {
+    on,
+    presetId,
+    error,
+    stats,
+    params: paramsRef.current,
+    /** Оброблений голос як потік — його підмішує запис відео. */
+    stream: on ? engineRef.current.stream : null,
+    start,
+    stop,
+    selectPreset,
+    tune
+  }
 }

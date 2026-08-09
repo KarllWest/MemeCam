@@ -228,6 +228,55 @@ export const MASKS: Mask[] = [
     ]
   },
   {
+    id: 'bigeyes',
+    name: 'Великі очі',
+    icon: '👀',
+    layers: [
+      { kind: 'warp', points: [LM.irisL, LM.irisR], radius: 0.075, strength: 0.38 },
+      { kind: 'lens', params: { ...NEUTRAL_PARAMS, saturation: 1.1 } }
+    ]
+  },
+  {
+    id: 'balloon',
+    name: 'Кулька',
+    icon: '🎈',
+    layers: [
+      // Один широкий осередок по центру обличчя надуває голову цілком.
+      { kind: 'warp', points: [LM.noseTip], radius: 0.34, strength: 0.3 },
+      { kind: 'lens', params: { ...NEUTRAL_PARAMS } }
+    ]
+  },
+  {
+    id: 'pinhead',
+    name: 'Голка',
+    icon: '📌',
+    layers: [
+      // Від'ємна сила втягує: голова стискається, ніс лишається на місці.
+      { kind: 'warp', points: [LM.noseTip], radius: 0.36, strength: -0.34 },
+      { kind: 'lens', params: { ...NEUTRAL_PARAMS } }
+    ]
+  },
+  {
+    id: 'bignose',
+    name: 'Носяра',
+    icon: '👃',
+    layers: [
+      { kind: 'warp', points: [LM.noseTip], radius: 0.08, strength: 0.42 },
+      { kind: 'lens', params: { ...NEUTRAL_PARAMS } }
+    ]
+  },
+  {
+    id: 'chad',
+    name: 'Чед',
+    icon: '💪',
+    layers: [
+      // Широка щелепа й вужчі очі — карикатура на «сильне» обличчя.
+      { kind: 'warp', points: [LM.chin], radius: 0.2, strength: 0.24 },
+      { kind: 'warp', points: [LM.irisL, LM.irisR], radius: 0.06, strength: -0.2 },
+      glasses('sunglasses-deal.svg', 1.5)
+    ]
+  },
+  {
     id: 'terminator',
     name: 'Термінатор',
     icon: '🦾',

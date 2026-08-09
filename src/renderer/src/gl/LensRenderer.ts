@@ -1,6 +1,6 @@
 import { Program, RenderTarget, createFullscreenQuad } from './glUtils'
 import { OverlayRenderer } from './OverlayRenderer'
-import type { OverlayLayer } from '../masks/types'
+import { MAX_WARPS, type OverlayLayer, type WarpLayer } from '../masks/types'
 import {
   QUAD_VS,
   SCENE_FS,
@@ -289,11 +289,17 @@ export class LensRenderer {
    * Малює кадр. pose = null означає, що обличчя не знайдено — ефект плавно згасає
    * на останній відомій позиції, а не смикається.
    */
+  /** Буфери під юніформи спотворення — щоб не алокувати їх щокадру. */
+  private readonly warpCenters = new Float32Array(MAX_WARPS * 2)
+  private readonly warpRadii = new Float32Array(MAX_WARPS)
+  private readonly warpStrengths = new Float32Array(MAX_WARPS)
+
   render(
     video: HTMLVideoElement,
     pose: FacePose | null,
     p: LensParams,
-    overlayLayers: OverlayLayer[] = []
+    overlayLayers: OverlayLayer[] = [],
+    warpLayers: WarpLayer[] = []
   ): void {
     const gl = this.gl
 
@@ -344,10 +350,35 @@ export class LensRenderer {
       this.blurPass(this.bgB, this.bgA, 'y', p.bgBlur)
     }
 
-    // --- 3. Сцена: відео, підміна фону, грейд ---
+    const aspect = this.canvas.width / this.canvas.height
+
+    // Осередки спотворення збираємо зі згладжених точок: інакше обличчя
+    // смикалося б разом з кожним промахом детектора.
+    let warpCount = 0
+    const sp = this.smoothed?.points
+    if (sp) {
+      for (const layer of warpLayers) {
+        for (const idx of layer.points) {
+          if (warpCount >= MAX_WARPS) break
+          this.warpCenters[warpCount * 2] = sp[idx * 2]
+          this.warpCenters[warpCount * 2 + 1] = sp[idx * 2 + 1]
+          this.warpRadii[warpCount] = layer.radius
+          // Гасимо разом із втратою обличчя, щоб картинка не сіпнулась.
+          this.warpStrengths[warpCount] = layer.strength * this.active
+          warpCount++
+        }
+      }
+    }
+
+    // --- 3. Сцена: відео, спотворення, підміна фону, грейд ---
     this.sceneRT.bind()
     this.sceneProg
       .use()
+      .f('uAspect', aspect)
+      .i('uWarpCount', warpCount)
+      .v2v('uWarpCenter', this.warpCenters)
+      .fv('uWarpRadius', this.warpRadii)
+      .fv('uWarpStrength', this.warpStrengths)
       .tex('uVideo', 0, this.videoTex)
       .tex('uBlurred', 1, this.bgA.texture)
       .tex('uMask', 2, this.maskTex)
@@ -360,8 +391,6 @@ export class LensRenderer {
       // М'якість краю в частках кадру: різкий контур моделі виглядає як виріз ножицями.
       .f('uMaskSoftness', 1.6 / Math.max(1, this.bgA.width))
     this.draw()
-
-    const aspect = this.canvas.width / this.canvas.height
 
     // --- 4. Атмосфера: дим унизу, блискавки згори ---
     // Преммультиплікована альфа: дим змішується як шар, блискавка лягає адитивно.

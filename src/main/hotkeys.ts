@@ -15,6 +15,7 @@ export type HotkeyAction =
   | { type: 'voice-toggle' }
   | { type: 'broadcast-toggle' }
   | { type: 'capture' }
+  | { type: 'record-toggle' }
 
 interface Binding {
   accelerator: string
@@ -38,7 +39,8 @@ export const BINDINGS: Binding[] = [
   { accelerator: 'Control+Alt+Left', action: { type: 'mask-prev' }, label: 'Попередня маска' },
   { accelerator: 'Control+Alt+V', action: { type: 'voice-toggle' }, label: 'Голос увімк/вимк' },
   { accelerator: 'Control+Alt+B', action: { type: 'broadcast-toggle' }, label: 'Трансляція' },
-  { accelerator: 'Control+Alt+S', action: { type: 'capture' }, label: 'Зняти фото' }
+  { accelerator: 'Control+Alt+S', action: { type: 'capture' }, label: 'Зняти фото' },
+  { accelerator: 'Control+Alt+R', action: { type: 'record-toggle' }, label: 'Запис відео' }
 ]
 
 export interface HotkeyInfo {
