@@ -4,10 +4,30 @@
  * інакше інтерфейс сірий, а застосунок про лазери з очей.
  */
 :root {
-  --bg: #07070d;
-  --surface: rgba(24, 24, 38, 0.72);
-  --surface-2: rgba(34, 34, 52, 0.72);
-  --surface-3: rgba(46, 46, 68, 0.8);
+  /* Крок 4px. Раніше відступи були навмання — 7, 9, 11, 13 — і саме через це
+     інтерфейс читався зібраним, а не спроєктованим. */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s8: 32px;
+
+  /* Висота поверхні. У темній темі глибину дає світліший тон, а не тінь:
+     тінь на майже чорному просто не видно. */
+  --e0: #07070d;
+  --e1: rgba(24, 24, 38, 0.72);
+  --e2: rgba(34, 34, 52, 0.72);
+  --e3: rgba(46, 46, 68, 0.8);
+  --e4: rgba(58, 58, 84, 0.86);
+
+  /* Сумісні назви, щоб не переписувати кожне правило. */
+  --bg: var(--e0);
+  --surface: var(--e1);
+  --surface-2: var(--e2);
+  --surface-3: var(--e3);
+
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.16);
   --text: #f0f0f8;
@@ -18,7 +38,17 @@
   --ok: #4fd996;
   --warn: #ffb454;
   --err: #ff6b7d;
+
+  /* Розміри тексту. Дрібний у темній темі йде важчим: тонке накреслення на
+     темному тлі читається гірше, ніж на світлому. */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fw-label: 500;
+
   --radius: 14px;
+  --radius-sm: 8px;
   --grad: linear-gradient(135deg, var(--accent), var(--accent-2));
 }
 
@@ -86,7 +116,7 @@ button:disabled {
   align-items: center;
   gap: 16px;
   /* Справа лишаємо місце під рідні кнопки вікна: вони лежать накладкою поверх. */
-  padding: 0 148px 0 14px;
+  padding: 0 148px 0 16px;
   /* Суцільний колір, а не напівпрозорий: смуга з кнопками вікна малюється
      Electron окремо й непрозоро, і будь-яка різниця дає видимий шов. */
   background: #0e0e18;
@@ -105,7 +135,7 @@ button:disabled {
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex: none;
 }
 
@@ -125,6 +155,7 @@ button:disabled {
 }
 
 .brand-version {
+  font-weight: var(--fw-label);
   font-size: 11px;
   color: var(--muted);
   background: var(--surface-2);
@@ -137,20 +168,21 @@ button:disabled {
 .topbar-status {
   flex: 1;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   min-width: 0;
   overflow: hidden;
 }
 
 .pill {
+  font-weight: var(--fw-label);
   flex: none;
   font-size: 11px;
   color: var(--muted);
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 3px 10px;
+  padding: 4px 12px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -173,7 +205,7 @@ button:disabled {
   background: rgba(255, 107, 125, 0.13);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .pill.live .dot {
@@ -204,7 +236,7 @@ button:disabled {
 .topbar-actions {
   flex: none;
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .iconbtn {
@@ -258,7 +290,7 @@ button:disabled {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 14px;
+  padding: 16px;
   gap: 12px;
 }
 
@@ -272,9 +304,7 @@ button:disabled {
   overflow: hidden;
   display: grid;
   place-items: center;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.55),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .viewport canvas {
@@ -294,7 +324,7 @@ button:disabled {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   color: var(--muted);
   text-align: center;
   padding: 24px;
@@ -328,9 +358,9 @@ button:disabled {
 }
 
 .placeholder .keys {
-  margin-top: 10px;
+  margin-top: 12px;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   font-size: 11.5px;
 }
@@ -343,7 +373,7 @@ button:disabled {
   right: 0;
   bottom: 0;
   display: flex;
-  gap: 9px;
+  gap: 8px;
   padding: 52px 12px 12px;
   overflow-x: auto;
   background: linear-gradient(to top, rgba(4, 4, 10, 0.92), rgba(4, 4, 10, 0));
@@ -359,7 +389,7 @@ button:disabled {
 .mask {
   flex: none;
   width: 78px;
-  padding: 9px 4px 8px;
+  padding: 8px 4px 8px;
   background: rgba(28, 28, 44, 0.66);
   border: 1px solid var(--line);
   border-radius: 13px;
@@ -367,7 +397,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   transition: transform 0.14s, border-color 0.14s, color 0.14s, box-shadow 0.14s;
@@ -439,6 +469,7 @@ button:disabled {
 }
 
 .mask-name {
+  font-weight: var(--fw-label);
   font-size: 10.5px;
   white-space: nowrap;
   overflow: hidden;
@@ -477,7 +508,7 @@ button:disabled {
 }
 
 .btn.wide {
-  padding: 11px 18px;
+  padding: 12px 20px;
   font-weight: 550;
 }
 
@@ -486,7 +517,7 @@ select {
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 9px 11px;
+  padding: 8px 12px;
   font: inherit;
   min-width: 0;
   text-overflow: ellipsis;
@@ -505,7 +536,7 @@ select:disabled {
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 9px 15px;
+  padding: 8px 16px;
   white-space: nowrap;
   transition: background 0.14s, border-color 0.14s, transform 0.14s, box-shadow 0.14s;
 }
@@ -521,7 +552,7 @@ select:disabled {
 }
 
 .btn.sm {
-  padding: 6px 12px;
+  padding: 8px 12px;
   font-size: 12.5px;
 }
 
@@ -650,7 +681,7 @@ select:disabled {
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
   padding: 8px 12px;
   background: var(--surface);
@@ -668,11 +699,12 @@ select:disabled {
 .voice-row {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   min-width: 0;
 }
 
 .voice-hint {
+  font-weight: var(--fw-label);
   margin: 0;
   font-size: 11.5px;
   color: var(--muted);
@@ -696,7 +728,7 @@ select:disabled {
   flex: none;
   display: flex;
   align-items: baseline;
-  gap: 7px;
+  gap: 8px;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -732,7 +764,7 @@ select:disabled {
 .voice-presets {
   flex: 1;
   display: flex;
-  gap: 7px;
+  gap: 8px;
   overflow-x: auto;
   min-width: 0;
 }
@@ -745,8 +777,8 @@ select:disabled {
   flex: none;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 13px;
+  gap: 8px;
+  padding: 8px 12px;
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -781,16 +813,16 @@ select:disabled {
 .seg {
   display: flex;
   gap: 4px;
-  padding: 3px;
+  padding: 4px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--line);
   border-radius: 10px;
-  margin-bottom: 11px;
+  margin-bottom: 12px;
 }
 
 .seg-btn {
   flex: 1;
-  padding: 6px 8px;
+  padding: 8px 8px;
   border: none;
   border-radius: 7px;
   background: transparent;
@@ -814,8 +846,8 @@ select:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 9px;
+  gap: 12px;
+  margin-bottom: 8px;
   font-size: 12px;
   color: var(--muted);
 }
@@ -823,7 +855,7 @@ select:disabled {
 .device select {
   flex: 0 1 178px;
   min-width: 0;
-  padding: 6px 9px;
+  padding: 8px 8px;
   font-size: 12.5px;
 }
 
@@ -833,10 +865,11 @@ select:disabled {
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 .notice {
+  font-weight: var(--fw-label);
   margin: 0;
   font-size: 12px;
   color: var(--muted);
@@ -868,7 +901,7 @@ select:disabled {
 .shots {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   overflow-x: auto;
 }
 
@@ -882,7 +915,7 @@ select:disabled {
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: #7f7f9c;
-  margin-right: 2px;
+  margin-right: 4px;
 }
 
 .shot {
@@ -940,7 +973,7 @@ select:disabled {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 14px 12px 12px 16px;
+  padding: 16px 12px 12px 16px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -950,7 +983,7 @@ select:disabled {
 }
 
 .panel-note {
-  margin: 5px 0 0;
+  margin: 4px 0 0;
   font-size: 11px;
   color: var(--muted);
   line-height: 1.4;
@@ -959,24 +992,24 @@ select:disabled {
 .panel-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 16px 22px;
+  padding: 12px 16px 24px;
 }
 
 .panel-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .panel h3 {
-  margin: 20px 0 9px;
+  margin: 20px 0 8px;
   font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #7f7f9c;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -994,7 +1027,7 @@ select:disabled {
 
 .slider {
   display: block;
-  margin-bottom: 11px;
+  margin-bottom: 12px;
 }
 
 .slider-head {
@@ -1002,7 +1035,7 @@ select:disabled {
   justify-content: space-between;
   font-size: 12px;
   color: var(--muted);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .slider-head b {
@@ -1040,7 +1073,7 @@ select:disabled {
 }
 
 .color {
-  margin-bottom: 13px;
+  margin-bottom: 12px;
 }
 
 .color-head {
@@ -1049,7 +1082,7 @@ select:disabled {
   align-items: center;
   font-size: 12px;
   color: var(--muted);
-  margin-bottom: 7px;
+  margin-bottom: 8px;
 }
 
 .color-head input[type='color'] {
@@ -1064,7 +1097,7 @@ select:disabled {
 
 .swatches {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .swatch {
@@ -1083,17 +1116,18 @@ select:disabled {
 
 .hotkeys {
   list-style: none;
-  margin: 9px 0 0;
+  margin: 8px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .hotkeys li {
+  font-weight: var(--fw-label);
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   font-size: 12px;
   color: var(--muted);
 }
@@ -1113,7 +1147,7 @@ kbd {
   background: var(--surface-3);
   border: 1px solid var(--line-strong);
   border-radius: 6px;
-  padding: 2px 8px;
+  padding: 4px 8px;
   font: 11px/1.3 'Segoe UI', system-ui, sans-serif;
   color: var(--text);
   white-space: nowrap;
@@ -1143,7 +1177,7 @@ kbd {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 .modal-head {
@@ -1152,7 +1186,7 @@ kbd {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 12px 15px 22px;
+  padding: 20px 12px 16px 24px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -1171,8 +1205,8 @@ kbd {
   flex: none;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 18px 12px 22px;
+  gap: 12px;
+  padding: 12px 20px 12px 24px;
   background: rgba(255, 255, 255, 0.03);
   border-bottom: 1px solid var(--line);
   font-size: 13px;
@@ -1202,13 +1236,13 @@ kbd {
 
 .release-notes {
   flex: none;
-  padding: 13px 22px;
+  padding: 12px 24px;
   border-bottom: 1px solid var(--line);
   background: rgba(91, 157, 255, 0.08);
 }
 
 .release-notes h4 {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -1226,11 +1260,11 @@ kbd {
 .modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 22px 22px;
+  padding: 4px 24px 24px;
 }
 
 .release {
-  padding: 18px 0;
+  padding: 20px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -1241,7 +1275,7 @@ kbd {
 .release-head {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 12px;
 }
 
 .release-head h3 {
@@ -1261,9 +1295,10 @@ kbd {
 }
 
 .chip {
+  font-weight: var(--fw-label);
   font-size: 10.5px;
   border-radius: 999px;
-  padding: 2px 9px;
+  padding: 4px 8px;
   border: 1px solid var(--line-strong);
   color: var(--muted);
 }
@@ -1275,24 +1310,24 @@ kbd {
 }
 
 .release-summary {
-  margin: 7px 0 0;
+  margin: 8px 0 0;
   font-size: 13px;
   color: var(--muted);
 }
 
 .change-group {
-  margin-top: 13px;
+  margin-top: 12px;
 }
 
 .change-group h4 {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--muted);
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
 }
 
 .change-group ul {
